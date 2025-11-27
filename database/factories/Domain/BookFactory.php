@@ -17,13 +17,14 @@ class BookFactory extends Factory
     public function definition(): array
 {
     return [
-        'title' => $this->faker->sentence(3),
-        'author' => $this->faker->name(),
-        'isbn' => $this->faker->isbn13(),
+        'title'      => $this->faker->sentence(3),
+        'author'     => $this->faker->name(),
+        'isbn'       => $this->faker->isbn13(),
         'source_url' => $this->faker->url(),
-        'tags' => ['tag1', 'tag2'],
-        'cover_url' => null,
+        'tags'       => ['AI', '読書'],
+        'cover_url'  => null,
     ];
 }
+
 
 }

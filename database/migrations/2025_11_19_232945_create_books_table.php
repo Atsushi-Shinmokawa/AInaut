@@ -12,18 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('books', function (Blueprint $table) {
-            $table->uuid('id')->primary();           // UUIDv7は後でModel側で生成
-        $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-
-        $table->string('title');
-        $table->string('author')->nullable();
-        $table->string('isbn')->nullable()->index();
-        $table->string('source_url')->nullable();
-        $table->json('tags')->nullable();
-        $table->string('cover_url')->nullable();
-
-        $table->timestamps();
+            $table->uuid('id')->primary();  // 主キー
+        
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+        
+            $table->string('title');
+            $table->string('author')->nullable();
+            $table->string('isbn')->nullable()->index();
+            $table->string('source_url')->nullable();
+            $table->json('tags')->nullable();
+            $table->string('cover_url')->nullable();
+        
+            $table->timestamps();
         });
+        
     }
 
     /**
