@@ -10,21 +10,24 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('reading_logs', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->uuid('book_id');
-            $table->foreign('book_id')->references('id')->on('books')->cascadeOnDelete();
-    
-            $table->date('date');
-            $table->enum('progress', ['started', 'reading', 'finished'])->default('started');
-            $table->text('note')->nullable();
-            $table->json('tags')->nullable();
-    
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('reading_logs', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        
+        // UserモデルもUUIDにする必要があります（後述）
+        $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+        $table->foreignUuid('book_id')->constrained('books')->cascadeOnDelete();
+
+        $table->date('date')->nullable();
+        $table->enum('progress', ['want_to_read', 'reading', 'finished'])->default('want_to_read');
+        $table->text('note')->nullable();
+        $table->json('tags')->nullable();
+
+        $table->timestamps();
+        
+        $table->unique(['user_id', 'book_id']);
+    });
+}
 
     /**
      * Reverse the migrations.

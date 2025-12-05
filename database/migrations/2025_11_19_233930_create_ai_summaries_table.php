@@ -10,21 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('ai_summaries', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-        $table->uuid('book_id');
-        $table->foreign('book_id')->references('id')->on('books')->cascadeOnDelete();
+{
+    Schema::create('ai_summaries', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        
+        $table->foreignUuid('reading_log_id')->constrained('reading_logs')->cascadeOnDelete();
 
-        $table->string('type'); // summary | insight
+        $table->string('type');
         $table->string('prompt_version')->nullable();
-        $table->text('content'); // 要約 or 考察本文
+        $table->text('content');
         $table->string('persona')->default('zundamon');
-        $table->json('meta')->nullable(); // tokens, model, cost など
+        $table->json('meta')->nullable();
 
         $table->timestamps();
-        });
-    }
+    });
+}
 
     /**
      * Reverse the migrations.

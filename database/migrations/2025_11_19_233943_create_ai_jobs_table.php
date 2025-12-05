@@ -10,20 +10,24 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('ai_jobs', function (Blueprint $table) {
-            $$table->uuid('id')->primary();
-            $table->uuid('book_id')->nullable();
-            $table->foreign('book_id')->references('id')->on('books')->nullOnDelete();
-    
-            $table->string('type');   // summary | insight など
-            $table->string('status'); // pending | succeeded | failed
-            $table->json('payload')->nullable(); // 投げたプロンプトの概要など
-            $table->text('error')->nullable();
-    
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('ai_jobs', function (Blueprint $table) {
+        $table->uuid('id')->primary();
+        
+        $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+
+        // ポリモーフィックリレーションの場合、IDがUUIDなら _id カラムも uuid型にする
+        $table->uuid('target_id')->nullable();
+        $table->string('target_type')->nullable();
+
+        $table->string('type');   
+        $table->string('status'); 
+        $table->json('payload')->nullable(); 
+        $table->text('error')->nullable();
+
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.

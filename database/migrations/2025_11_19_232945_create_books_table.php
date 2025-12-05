@@ -10,23 +10,25 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('books', function (Blueprint $table) {
-            $table->uuid('id')->primary();  // 主キー
+{
+    Schema::create('books', function (Blueprint $table) {
+        // uuid型を主キーにする
+        $table->uuid('id')->primary();
         
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-        
-            $table->string('title');
-            $table->string('author')->nullable();
-            $table->string('isbn')->nullable()->index();
-            $table->string('source_url')->nullable();
-            $table->json('tags')->nullable();
-            $table->string('cover_url')->nullable();
-        
-            $table->timestamps();
-        });
-        
-    }
+        // 著者IDは Authorsテーブルが普通のIDなら foreignId、
+        // AuthorsもUUIDにするなら foreignUuid に合わせる必要があります。
+        // 今回はAuthorsもUUID(ULID)にすると仮定して書きます。
+        $table->foreignUuid('author_id')->constrained('authors')->cascadeOnDelete();
+
+        $table->string('title');
+        $table->string('isbn')->nullable()->index();
+        $table->string('source_url')->nullable();
+        $table->json('tags')->nullable();
+        $table->string('cover_url')->nullable();
+    
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.
