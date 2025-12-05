@@ -14,17 +14,19 @@ return new class extends Migration
     Schema::create('reading_logs', function (Blueprint $table) {
         $table->uuid('id')->primary();
         
-        // UserモデルもUUIDにする必要があります（後述）
         $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
         $table->foreignUuid('book_id')->constrained('books')->cascadeOnDelete();
 
-        $table->date('date')->nullable();
-        $table->enum('progress', ['want_to_read', 'reading', 'finished'])->default('want_to_read');
-        $table->text('note')->nullable();
-        $table->json('tags')->nullable();
-
+        // Level 3: 詳細な追跡のためステータスと日付を分ける
+        $table->enum('status', ['want_to_read', 'reading', 'completed'])->default('want_to_read');
+        $table->date('started_at')->nullable();
+        $table->date('completed_at')->nullable();
+        
+        $table->unsignedTinyInteger('rating')->nullable()->comment('1-5の評価'); 
+        
         $table->timestamps();
         
+        // 1ユーザー1冊につきログは1つ（再読対応なら外すが、基本はこれでOK）
         $table->unique(['user_id', 'book_id']);
     });
 }

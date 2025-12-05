@@ -13,7 +13,8 @@ return new class extends Migration
 {
     Schema::create('authors', function (Blueprint $table) {
         $table->uuid('id')->primary(); // ここもUUIDに合わせる
-        $table->string('name')->comment('著者名');
+        $table->string('name')->index()->comment('著者名');; // 検索用にインデックス
+        $table->text('memo')->nullable();
         $table->timestamps();
     });
 }
