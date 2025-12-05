@@ -7,14 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
-class AiSummary extends Model
+class ReadingNote extends Model
 {
     use HasFactory, HasUuids;
 
     protected $fillable = [
         'reading_log_id',
+        'page_number',
         'content',
-        'token_usage', // 消費トークン数などを記録する場合
     ];
 
     public function readingLog(): BelongsTo
