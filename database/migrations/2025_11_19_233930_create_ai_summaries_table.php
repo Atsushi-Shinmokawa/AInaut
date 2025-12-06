@@ -26,6 +26,8 @@ return new class extends Migration
         // 生成時の条件（「初心者向け」「300文字で」など）を保存しておくと、後で「なぜこの要約になったか」がわかる
         $table->string('context_type')->default('general')->comment('general, for_beginner, technical etc'); 
 
+        $table->json('meta')->nullable(); 
+
         $table->timestamps();
         
         // 検索を速くするため、複合インデックスを貼る

@@ -13,20 +13,21 @@ return new class extends Migration
 {
     Schema::create('ai_jobs', function (Blueprint $table) {
         $table->uuid('id')->primary();
-        
+            
         $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
-
-        // ポリモーフィックリレーションの場合、IDがUUIDなら _id カラムも uuid型にする
+    
         $table->uuid('target_id')->nullable();
         $table->string('target_type')->nullable();
-
-        $table->string('type');   
-        $table->string('status'); 
-        $table->json('payload')->nullable(); 
-        $table->text('error')->nullable();
-
+    
+        $table->string('job_type');        // ← type → job_type に
+        $table->string('status');          // pending, processing, completed, failed
+        $table->json('payload')->nullable();
+        $table->json('result')->nullable(); // 結果をJSONで持ちたいなら追加
+        $table->text('error_message')->nullable();
+    
         $table->timestamps();
     });
+    
 }
 
     /**
