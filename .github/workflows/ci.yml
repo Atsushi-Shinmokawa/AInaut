@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. コードをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. PHP を用意
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, bcmath, intl, pdo_mysql
+          coverage: none
+
+      # 3. Composer のキャッシュ
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      # 4. Composer install
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # 5. .env を用意して SQLite 用に書き換え
+      - name: Prepare .env for testing (SQLite)
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+          # DB_CONNECTION を sqlite に
+          php -r "file_put_contents('.env', preg_replace('/^DB_CONNECTION=.*/m', 'DB_CONNECTION=sqlite', file_get_contents('.env')));"
+
+          # DB_DATABASE を database/database.sqlite に
+          php -r "file_put_contents('.env', preg_replace('/^DB_DATABASE=.*/m', 'DB_DATABASE=database/database.sqlite', file_get_contents('.env')));"
+
+          # SQLite ファイルを作成
+          mkdir -p database
+          touch database/database.sqlite
+
+      # 6. マイグレーション実行
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      # 7. テスト実行（今はテスト0件でも OK）
+      - name: Run Laravel tests
+        run: php artisan test
