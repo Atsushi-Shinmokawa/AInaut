@@ -7,8 +7,18 @@ import NavLink from "@/Components/NavLink.vue";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
 import { Link } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
+import type { PageProps as InertiaPageProps } from "@inertiajs/core";
 
-const page = usePage();
+type FlashMessages = {
+    success?: string;
+    error?: string;
+};
+
+type PageProps = InertiaPageProps & {
+    flash?: FlashMessages;
+};
+
+const page = usePage<PageProps>();
 
 const showingNavigationDropdown = ref(false);
 </script>
