@@ -17,7 +17,9 @@ class Book extends Model
         'title',
         'isbn',
         'publisher',         // 追加
+        'source_url',        // 追加
         'cover_url',
+        'tags',              // 追加
         'raw_api_response',  // 追加
         'published_at',
     ];
@@ -26,6 +28,7 @@ class Book extends Model
     protected $casts = [
         'published_at' => 'date',
         'raw_api_response' => 'array',
+        'tags'             => 'array',
     ];
 
     public function author(): BelongsTo
