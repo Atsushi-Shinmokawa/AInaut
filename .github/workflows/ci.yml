@@ -31,11 +31,11 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
-        - name: Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'       # ローカルと近いバージョンならOK
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install NPM dependencies
         run: npm ci
@@ -43,28 +43,20 @@ jobs:
       - name: Build assets
         run: npm run build
 
-      # .env をテスト用に用意して、SQLite DB と Vite の manifest を作る
-      - name: Prepare app for testing (SQLite + Vite manifest)
+      - name: Prepare app for testing (SQLite)
         run: |
           cp .env.example .env
           php artisan key:generate
 
-          # SQLite DB を作成
           mkdir -p database
           touch database/database.sqlite
 
-          # マイグレーション実行
           php artisan migrate --force
-
-          # Vite のダミー manifest を作成
-          mkdir -p public/build
-          echo '{}' > public/build/manifest.json
         env:
           APP_ENV: testing
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
 
-      # ★ ここでも DB_* を明示するのがポイント
       - name: Run Laravel tests
         run: php artisan test
         env:
