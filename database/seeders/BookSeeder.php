@@ -1,16 +1,26 @@
 <?php
 
+// database/seeders/BookSeeder.php
+
 namespace Database\Seeders;
 
-use App\Models\Domain\Book;
+use App\Models\Author;
+use App\Models\Book;
 use Illuminate\Database\Seeder;
 
 class BookSeeder extends Seeder
 {
     public function run(): void
     {
-        Book::factory()->count(15)->create([
-            'user_id' => 1, // Breeze の最初のユーザー
-        ]);
+        $authors = Author::all();
+
+        Book::factory()
+            ->count(40)
+            ->make()
+            ->each(function (Book $book) use ($authors) {
+                $book->author_id = $authors->random()->id;
+                $book->save();
+            });
     }
 }
+
