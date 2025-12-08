@@ -36,6 +36,9 @@ class ReadingLogFactory extends Factory
             'status'       => $status,
             'started_at'   => $startedAt,
             'completed_at' => $completedAt,
+            'rating' => $status === 'completed'
+    ? $this->faker->numberBetween(1, 5)
+    : null,
         ];
     }
 }

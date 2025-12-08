@@ -17,15 +17,29 @@ class ReadingLog extends Model
     protected $fillable = [
         'user_id',
         'book_id',
-        'status', // unread, reading, completed
+        'status', // want_to_read, reading, completed
         'started_at',
         'completed_at',
+        'rating',
     ];
 
     protected $casts = [
         'started_at' => 'date',
         'completed_at' => 'date',
     ];
+
+    public const STATUS_WANT_TO_READ = 'want_to_read';
+    public const STATUS_READING      = 'reading';
+    public const STATUS_COMPLETED    = 'completed';
+
+    public static function statuses(): array
+    {
+        return [
+            self::STATUS_WANT_TO_READ,
+            self::STATUS_READING,
+            self::STATUS_COMPLETED,
+        ];
+    }
 
     public function user(): BelongsTo
     {
