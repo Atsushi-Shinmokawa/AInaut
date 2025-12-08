@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\ReadingLogController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,6 +29,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/books', [BookController::class, 'store'])->name('books.store');
 
     Route::get('/my-books', [BookController::class, 'index'])->name('books.index');
+
+    Route::get('/my-books', [ReadingLogController::class, 'index'])
+    ->name('reading-logs.index');
+
+Route::post('/reading-logs', [ReadingLogController::class, 'store'])
+    ->name('reading-logs.store');
+
+Route::put('/reading-logs/{readingLog}', [ReadingLogController::class, 'update'])
+    ->name('reading-logs.update');
+
+Route::delete('/reading-logs/{readingLog}', [ReadingLogController::class, 'destroy'])
+    ->name('reading-logs.destroy');
 });
 
 require __DIR__.'/auth.php';
