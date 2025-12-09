@@ -17,8 +17,10 @@ return new class extends Migration
         // どのログ（誰のどの本）に対するメモか
         $table->foreignUuid('reading_log_id')->constrained('reading_logs')->cascadeOnDelete();
 
-        $table->integer('page_number')->nullable(); // ページ数
+        $table->unsignedInteger('page_number')->nullable(); // ページ数
         $table->text('content'); // メモ内容
+        $table->index(['reading_log_id', 'page_number']);
+
         
         $table->timestamps();
     });
