@@ -32,7 +32,7 @@ class ReadingLogController extends Controller
                     'book'   => [
                         'id'     => $log->book->id,
                         'title'  => $log->book->title,
-                        'author' => $log->book->author,
+                        'author' => optional($log->book->author)->name,
                     ],
                 ];
             }),
