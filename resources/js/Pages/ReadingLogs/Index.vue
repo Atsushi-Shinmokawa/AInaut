@@ -8,6 +8,7 @@ type ReadingLog = {
     book: {
         id: string;
         title: string;
+        added_at: string;
         author?: string;
     };
 };
