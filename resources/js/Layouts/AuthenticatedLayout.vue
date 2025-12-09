@@ -59,8 +59,10 @@ const showingNavigationDropdown = ref(false);
                                 </NavLink>
 
                                 <NavLink
-                                    :href="route('books.index')"
-                                    :active="route().current('books.index')"
+                                    :href="route('reading-logs.index')"
+                                    :active="
+                                        route().current('reading-logs.index')
+                                    "
                                 >
                                     マイ本棚
                                 </NavLink>
