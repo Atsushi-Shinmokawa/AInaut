@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\ReadingLogController;
+use App\Http\Controllers\ReadingNoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,28 +21,43 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
-    // 書籍検索画面の表示
-    Route::get('/books/search', [BookController::class, 'search'])->middleware(['auth', 'verified'])->name('books.search');
-    
-    // 書籍の保存処理（Google Booksから選択して保存）
-    Route::post('/books', [BookController::class, 'store'])->name('books.store');
+    Route::get('/books/search', [BookController::class, 'search'])
+        ->name('books.search');
 
-    Route::get('/my-books', [BookController::class, 'index'])->name('books.index');
+    Route::post('/books', [BookController::class, 'store'])
+        ->name('books.store');
 
+    // マイ本棚（Bookの一覧）
     Route::get('/my-books', [ReadingLogController::class, 'index'])
-    ->name('reading-logs.index');
+        ->name('reading-logs.index');
 
-Route::post('/reading-logs', [ReadingLogController::class, 'store'])
-    ->name('reading-logs.store');
+    // 読書ログ一覧
+    Route::get('/reading-logs', [ReadingLogController::class, 'index'])
+        ->name('reading-logs.index');
 
-Route::put('/reading-logs/{readingLog}', [ReadingLogController::class, 'update'])
-    ->name('reading-logs.update');
+    Route::post('/reading-logs', [ReadingLogController::class, 'store'])
+        ->name('reading-logs.store');
 
-Route::delete('/reading-logs/{readingLog}', [ReadingLogController::class, 'destroy'])
-    ->name('reading-logs.destroy');
+    Route::put('/reading-logs/{readingLog}', [ReadingLogController::class, 'update'])
+        ->name('reading-logs.update');
+
+    Route::delete('/reading-logs/{readingLog}', [ReadingLogController::class, 'destroy'])
+        ->name('reading-logs.destroy');
+
+        // 🔹 読書メモ 追加
+    Route::post('/reading-logs/{readingLog}/notes', [ReadingNoteController::class, 'store'])
+    ->name('reading-notes.store');
+
+// 🔹 読書メモ 削除
+Route::delete('/reading-logs/{readingLog}/notes/{readingNote}', [ReadingNoteController::class, 'destroy'])
+    ->name('reading-notes.destroy');
 });
+
 
 require __DIR__.'/auth.php';
