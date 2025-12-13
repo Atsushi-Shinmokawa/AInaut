@@ -7,6 +7,7 @@ use App\Http\Controllers\ReadingLogController;
 use App\Http\Controllers\ReadingNoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\HighlightImportController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -57,6 +58,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // 🔹 読書メモ 削除
 Route::delete('/reading-logs/{readingLog}/notes/{readingNote}', [ReadingNoteController::class, 'destroy'])
     ->name('reading-notes.destroy');
+
+    Route::get('/imports/kindle', [HighlightImportController::class, 'create'])->name('imports.kindle.create');
+    Route::post('/imports/kindle/preview', [HighlightImportController::class, 'preview'])->name('imports.kindle.preview');
+    Route::post('/imports/kindle/commit', [HighlightImportController::class, 'commit'])->name('imports.kindle.commit');
 });
 
 
