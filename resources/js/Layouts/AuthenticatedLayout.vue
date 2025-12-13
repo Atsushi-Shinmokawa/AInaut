@@ -66,6 +66,13 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     マイ本棚
                                 </NavLink>
+                                <NavLink
+                                    :href="route('imports.kindle.create')"
+                                    class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
+                                >
+                                    Kindleハイライト取り込み
+                                </NavLink>
+
                                 <!-- 📌 追加ここまで -->
                             </div>
                         </div>
@@ -173,6 +180,28 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+
+                        <!-- ✅ 追加：スマホメニューにも導線 -->
+                        <ResponsiveNavLink
+                            :href="route('books.search')"
+                            :active="route().current('books.search')"
+                        >
+                            書籍検索
+                        </ResponsiveNavLink>
+
+                        <ResponsiveNavLink
+                            :href="route('reading-logs.index')"
+                            :active="route().current('reading-logs.index')"
+                        >
+                            マイ本棚
+                        </ResponsiveNavLink>
+
+                        <ResponsiveNavLink
+                            :href="route('imports.kindle.create')"
+                            :active="route().current('imports.kindle.create')"
+                        >
+                            Kindleハイライト取り込み
                         </ResponsiveNavLink>
                     </div>
 
