@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Head, useForm } from "@inertiajs/vue3";
+import { Head, useForm, Link } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
+
+const page = usePage();
+const status = computed(() => (page.props as any).status ?? null);
 
 type Form = {
     raw_text: string;
@@ -27,6 +31,39 @@ function submit() {
             <h1 class="text-xl font-semibold sm:text-2xl">
                 Kindleハイライト取り込み
             </h1>
+            <div
+                v-if="status"
+                class="mt-4 rounded-xl border p-3 text-sm"
+                :class="{
+                    'border-green-200 bg-green-50 text-green-800':
+                        status.failed === 0,
+                    'border-amber-200 bg-amber-50 text-amber-800':
+                        status.failed > 0,
+                }"
+            >
+                {{ status.message }}
+            </div>
+
+            <!-- 👇 ここを追加 -->
+            <div class="flex gap-4 text-sm">
+                <Link
+                    :href="route('reading-logs.index')"
+                    class="font-medium text-indigo-600 hover:underline"
+                >
+                    → マイ本棚へ
+                </Link>
+
+                <!-- 将来用：book_id が分かるようになったら -->
+                <!--
+    <Link
+      :href="`/books/${status.book_id}`"
+      class="font-medium text-indigo-600 hover:underline"
+    >
+      → この本の詳細を見る
+    </Link>
+    -->
+            </div>
+
             <p class="mt-2 text-sm text-gray-600">
                 Kindleのハイライト（メール共有 / My
                 Clippings.txt）を貼り付けて、プレビューで確認してから保存します。
