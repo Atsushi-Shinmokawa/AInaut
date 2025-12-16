@@ -62,6 +62,13 @@ Route::delete('/reading-logs/{readingLog}/notes/{readingNote}', [ReadingNoteCont
     Route::get('/imports/kindle', [HighlightImportController::class, 'create'])->name('imports.kindle.create');
     Route::post('/imports/kindle/preview', [HighlightImportController::class, 'preview'])->name('imports.kindle.preview');
     Route::post('/imports/kindle/commit', [HighlightImportController::class, 'commit'])->name('imports.kindle.commit');
+
+    Route::delete('/highlights/{highlight}', [BookHighlightController::class, 'destroy'])
+    ->name('highlights.destroy');
+
+Route::post('/highlights/{highlight}/attach', [BookHighlightController::class, 'attach'])
+    ->name('highlights.attach');
+
 });
 
 
