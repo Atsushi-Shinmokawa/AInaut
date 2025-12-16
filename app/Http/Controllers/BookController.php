@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookRequest;
+use App\Models\Book;
+use App\Models\BookHighlight;
 use App\Services\BookSearchService;
 use App\Services\BookService;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Response;
+use Inertia\Inertia;
 
 class BookController extends Controller
 {
@@ -119,6 +122,26 @@ public function index(Request $request): Response
 
     return inertia('Books/Index', [
         'items' => $items,
+    ]);
+}
+public function show(Book $book)
+{
+    // この本に紐づいているハイライト
+    $highlights = BookHighlight::where('book_id', $book->id)
+        ->orderByDesc('created_at')
+        ->get();
+
+    // 未紐付け救済候補（title_raw が近いもの）
+    $orphanHighlights = BookHighlight::whereNull('book_id')
+        ->whereNotNull('title_raw')
+        ->where('title_raw', 'like', '%' . $book->title . '%')
+        ->limit(20)
+        ->get();
+
+    return Inertia::render('Books/Show', [
+        'book' => $book,
+        'highlights' => $highlights,
+        'orphanHighlights' => $orphanHighlights,
     ]);
 }
 
