@@ -1,0 +1,234 @@
+.
+├── # AInaut - Technical Documentati.md
+├── ainaut-20251209.zip
+├── ainaut-20251210.zip
+├── ainaut-20251213.zip
+├── ainaut-20251214.zip
+├── ainaut-20251217.zip
+├── ainaut.zip
+├── app
+│   ├── DTO
+│   │   └── BookData.php
+│   ├── Http
+│   │   ├── Controllers
+│   │   │   ├── Auth
+│   │   │   │   ├── AuthenticatedSessionController.php
+│   │   │   │   ├── ConfirmablePasswordController.php
+│   │   │   │   ├── EmailVerificationNotificationController.php
+│   │   │   │   ├── EmailVerificationPromptController.php
+│   │   │   │   ├── NewPasswordController.php
+│   │   │   │   ├── PasswordController.php
+│   │   │   │   ├── PasswordResetLinkController.php
+│   │   │   │   ├── RegisteredUserController.php
+│   │   │   │   └── VerifyEmailController.php
+│   │   │   ├── BookController.php
+│   │   │   ├── BookHIghlightController.php
+│   │   │   ├── Controller.php
+│   │   │   ├── HighlightImportController.php
+│   │   │   ├── ProfileController.php
+│   │   │   ├── ReadingLogController.php
+│   │   │   └── ReadingNoteController.php
+│   │   ├── Middleware
+│   │   │   └── HandleInertiaRequests.php
+│   │   └── Requests
+│   │       ├── Auth
+│   │       │   └── LoginRequest.php
+│   │       ├── Book
+│   │       │   ├── BookListRequest.php
+│   │       │   └── BookStoreRequest.php
+│   │       ├── ProfileUpdateRequest.php
+│   │       ├── StoreBookRequest.php
+│   │       ├── StoreReadingLogRequest.php
+│   │       ├── StoreReadingNoteRequest.php
+│   │       └── UpdateReadingLogRequest.php
+│   ├── Models
+│   │   ├── AiChatMessage.php
+│   │   ├── AiChatThread.php
+│   │   ├── AiJob.php
+│   │   ├── AiSummary.php
+│   │   ├── Author.php
+│   │   ├── Book.php
+│   │   ├── BookHighlight.php
+│   │   ├── ReadingLog.php
+│   │   ├── ReadingNote.php
+│   │   └── User.php
+│   ├── Providers
+│   │   └── AppServiceProvider.php
+│   └── Services
+│       ├── BookSearchService.php
+│       ├── BookService.php
+│       ├── Highlight
+│       │   ├── HighlightHasher.php
+│       │   └── KindleHighlightParser.php
+│       └── ReadingLogService.php
+├── artisan
+├── avedBook = $bookService->persist($bookData);
+├── bootstrap
+│   ├── app.php
+│   ├── cache
+│   │   ├── packages.php
+│   │   └── services.php
+│   └── providers.php
+├── compose.yaml
+├── composer.json
+├── composer.lock
+├── config
+│   ├── app.php
+│   ├── auth.php
+│   ├── cache.php
+│   ├── database.php
+│   ├── filesystems.php
+│   ├── logging.php
+│   ├── mail.php
+│   ├── queue.php
+│   ├── services.php
+│   └── session.php
+├── database
+│   ├── database.sqlite
+│   ├── factories
+│   │   ├── AuthorFactory.php
+│   │   ├── BookFactory.php
+│   │   ├── Domain
+│   │   │   ├── AiJobFactory.php
+│   │   │   ├── AiSummaryFactory.php
+│   │   │   ├── BookFactory.php
+│   │   │   └── ReadingLogFactory.php
+│   │   ├── ReadingLogFactory.php
+│   │   ├── ReadingNoteFactory.php
+│   │   └── UserFactory.php
+│   ├── migrations
+│   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   ├── 0001_01_01_000001_create_cache_table.php
+│   │   ├── 0001_01_01_000002_create_jobs_table.php
+│   │   ├── 2025_11_19_013247_create_authors_table.php
+│   │   ├── 2025_11_19_232945_create_books_table.php
+│   │   ├── 2025_11_19_233917_create_reading_logs_table.php
+│   │   ├── 2025_11_19_233925_create_reading_notes_table.php
+│   │   ├── 2025_11_19_233930_create_ai_summaries_table.php
+│   │   ├── 2025_11_19_233943_create_ai_jobs_table.php
+│   │   ├── 2025_12_05_052218_create_ai_chat_threads_table.php
+│   │   ├── 2025_12_05_052242_create_ai_chat_messages_table.php
+│   │   └── 2025_12_13_141244_create_book_highlights_table.php
+│   └── seeders
+│       ├── AuthorSeeder.php
+│       ├── BookSeeder.php
+│       ├── DatabaseSeeder.php
+│       └── ReadingLogSeeder.php
+├── package-lock.json
+├── package.json
+├── phpunit.xml
+├── postcss.config.js
+├── project_context.txt
+├── public
+│   ├── build
+│   │   ├── assets
+│   │   │   ├── _plugin-vue_export-helper-DlAUqK2U.js
+│   │   │   ├── app-BxnjSe0D.css
+│   │   │   ├── app-DISHeENt.js
+│   │   │   ├── ApplicationLogo-Bl4P7U5r.js
+│   │   │   ├── AuthenticatedLayout.vue_vue_type_script_setup_true_lang-CDV61CB6.js
+│   │   │   ├── ConfirmPassword-DCdduy5i.js
+│   │   │   ├── Dashboard-C9rKeKBU.js
+│   │   │   ├── DeleteUserForm-B_CjlC7L.js
+│   │   │   ├── DeleteUserForm.vue_vue_type_script_setup_true_lang-BFBNrXoE.js
+│   │   │   ├── Edit-CfYvNkp3.js
+│   │   │   ├── ForgotPassword-CyaqAGPW.js
+│   │   │   ├── GuestLayout.vue_vue_type_script_setup_true_lang-vtcs3afK.js
+│   │   │   ├── Index-Ulp_S3QS.js
+│   │   │   ├── Login-Dj-5egQC.js
+│   │   │   ├── PrimaryButton-CwCT1NqZ.js
+│   │   │   ├── Register-D9WpgNyW.js
+│   │   │   ├── ResetPassword-Dr5FpLpx.js
+│   │   │   ├── Search-BrqTHHrM.js
+│   │   │   ├── TextInput.vue_vue_type_script_setup_true_lang-CvB3CbON.js
+│   │   │   ├── UpdatePasswordForm-D2TPXPqK.js
+│   │   │   ├── UpdatePasswordForm.vue_vue_type_script_setup_true_lang-BimAvEwX.js
+│   │   │   ├── UpdateProfileInformationForm-oaLs1_Aa.js
+│   │   │   ├── UpdateProfileInformationForm.vue_vue_type_script_setup_true_lang-f7SlcxTI.js
+│   │   │   ├── VerifyEmail-CN6Z85d8.js
+│   │   │   └── Welcome-DOcHGAj7.js
+│   │   └── manifest.json
+│   ├── favicon.ico
+│   ├── hot
+│   ├── index.php
+│   └── robots.txt
+├── README.md
+├── resources
+│   ├── css
+│   │   └── app.css
+│   ├── js
+│   │   ├── app.ts
+│   │   ├── bootstrap.ts
+│   │   ├── Components
+│   │   │   ├── ApplicationLogo.vue
+│   │   │   ├── Checkbox.vue
+│   │   │   ├── DangerButton.vue
+│   │   │   ├── Dropdown.vue
+│   │   │   ├── DropdownLink.vue
+│   │   │   ├── InputError.vue
+│   │   │   ├── InputLabel.vue
+│   │   │   ├── Modal.vue
+│   │   │   ├── NavLink.vue
+│   │   │   ├── PrimaryButton.vue
+│   │   │   ├── ResponsiveNavLink.vue
+│   │   │   ├── SecondaryButton.vue
+│   │   │   └── TextInput.vue
+│   │   ├── Layouts
+│   │   │   ├── AuthenticatedLayout.vue
+│   │   │   └── GuestLayout.vue
+│   │   ├── Pages
+│   │   │   ├── Auth
+│   │   │   │   ├── ConfirmPassword.vue
+│   │   │   │   ├── ForgotPassword.vue
+│   │   │   │   ├── Login.vue
+│   │   │   │   ├── Register.vue
+│   │   │   │   ├── ResetPassword.vue
+│   │   │   │   └── VerifyEmail.vue
+│   │   │   ├── Books
+│   │   │   │   ├── HighlightsSection.vue
+│   │   │   │   ├── Index.vue
+│   │   │   │   ├── Search.vue
+│   │   │   │   └── Show.vue
+│   │   │   ├── Dashboard.vue
+│   │   │   ├── Imports
+│   │   │   │   └── Kindle
+│   │   │   │       ├── Create.vue
+│   │   │   │       └── Preview.vue
+│   │   │   ├── Profile
+│   │   │   │   ├── Edit.vue
+│   │   │   │   └── Partials
+│   │   │   │       ├── DeleteUserForm.vue
+│   │   │   │       ├── UpdatePasswordForm.vue
+│   │   │   │       └── UpdateProfileInformationForm.vue
+│   │   │   ├── ReadingLogs
+│   │   │   │   └── Index.vue
+│   │   │   └── Welcome.vue
+│   │   └── types
+│   │       ├── global.d.ts
+│   │       ├── index.d.ts
+│   │       └── vite-env.d.ts
+│   └── views
+│       └── app.blade.php
+├── routes
+│   ├── auth.php
+│   ├── console.php
+│   └── web.php
+├── tailwind.config.js
+├── tests
+│   ├── Feature
+│   │   ├── Auth
+│   │   │   ├── AuthenticationTest.php
+│   │   │   ├── EmailVerificationTest.php
+│   │   │   ├── PasswordConfirmationTest.php
+│   │   │   ├── PasswordResetTest.php
+│   │   │   ├── PasswordUpdateTest.php
+│   │   │   └── RegistrationTest.php
+│   │   └── ExampleTest.php
+│   ├── TestCase.php
+│   └── Unit
+│       └── ExampleTest.php
+├── tree.txt
+├── tsconfig.json
+└── vite.config.js
+
+45 directories, 187 files
