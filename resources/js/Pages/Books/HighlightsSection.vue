@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
 
-defineProps<{
+const props = defineProps<{
     highlights: any[];
     orphans: any[];
     bookId: string;
@@ -14,7 +14,7 @@ const deleteHighlight = (id: string) => {
 
 const attachHighlight = (id: string) => {
     router.post(route("highlights.attach", id), {
-        book_id: bookId,
+        book_id: props.bookId,
     });
 };
 </script>
