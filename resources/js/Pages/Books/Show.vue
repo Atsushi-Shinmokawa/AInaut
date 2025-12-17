@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { usePage, Link } from "@inertiajs/vue3";
+import HighlightsSection from "@/Pages/Books/HighlightsSection.vue";
 
 const page = usePage();
 
