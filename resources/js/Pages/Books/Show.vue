@@ -8,6 +8,12 @@ const page = usePage();
 const tab = computed(() => {
     return new URLSearchParams(window.location.search).get("tab") ?? "overview";
 });
+
+const props = defineProps<{
+    book: { id: string; title: string };
+    highlights: any[];
+    orphanHighlights: any[];
+}>();
 </script>
 
 <template>
