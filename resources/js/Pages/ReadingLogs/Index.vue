@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import { Head, router, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm, Link } from "@inertiajs/vue3";
 import { ref } from "vue";
 
 // 🔹 読書メモの型
@@ -153,8 +153,14 @@ const deleteNote = (logId: string, noteId: string) => {
                         <tr v-for="log in props.readingLogs" :key="log.id">
                             <td class="px-4 py-2 text-sm text-gray-900">
                                 <div class="font-medium">
-                                    {{ log.book.title }}
+                                    <Link
+                                        :href="route('books.show', log.book.id)"
+                                        class="text-blue-600 hover:underline"
+                                    >
+                                        {{ log.book.title }}
+                                    </Link>
                                 </div>
+
                                 <div class="text-xs text-gray-400">
                                     追加日: {{ log.added_at }}
                                 </div>
