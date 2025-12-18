@@ -17,13 +17,21 @@ class HighlightImportController extends Controller
         return Inertia::render('Imports/Kindle/Create');
     }
 
-    public function preview(Request $request, KindleHighlightParser $parser): Response
+    public function preview(Request $request, KindleHighlightParser $parser)
     {
         $data = $request->validate([
             'raw_text' => ['required','string','min:20'],
         ]);
 
-        $items = $parser->parse($data['raw_text']);
+        try {
+            $items = $parser->parse($request->raw_text);
+        } catch (\Throwable $e) {
+            return back()->with('error', '取り込み形式を認識できませんでした。Kindleのハイライト全文を貼り付けてください。');
+        }
+    
+        if (empty($items)) {
+            return back()->with('error', 'ハイライトが1件も見つかりませんでした。貼り付け内容を確認してください。');
+        }
 
         return Inertia::render('Imports/Kindle/Preview', [
             'raw_text' => $data['raw_text'],
@@ -89,10 +97,18 @@ public function commit(Request $request): RedirectResponse
     }
 
     // 何かしら失敗があったら warning 扱いもあり
-    $message = "保存: {$saved}件 / 重複スキップ: {$skipped}件";
-    if ($failed > 0) {
-        $message .= " / 失敗: {$failed}件";
-    }
+    $message = "{$saved}件保存しました（{$skipped}件は重複でスキップ）";
+if ($failed > 0) {
+    $message .= "／{$failed}件は保存に失敗しました";
+}
+
+return redirect()
+    ->route('books.show', [
+        'book' => $bookId,
+        'tab' => 'highlights',
+    ])
+    ->with('success', $message);
+
 
     return redirect()
         ->route('imports.kindle.create')
