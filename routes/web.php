@@ -8,6 +8,8 @@ use App\Http\Controllers\ReadingNoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\HighlightImportController;
+use App\Http\Controllers\BookHighlightController;
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -33,6 +35,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/books', [BookController::class, 'store'])
         ->name('books.store');
+
+        Route::get('/books/{book}', [BookController::class, 'show'])
+    ->name('books.show');
+
 
     // マイ本棚（Bookの一覧）
     Route::get('/my-books', [ReadingLogController::class, 'index'])

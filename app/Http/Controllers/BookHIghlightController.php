@@ -9,6 +9,8 @@ class BookHighlightController extends Controller
 {
     public function destroy(BookHighlight $highlight)
     {
+        abort_unless($highlight->user_id === $request->user()->id, 403);
+        
         $highlight->delete();
 
         return back()->with('success', 'ハイライトを削除しました');
