@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Response;
 use Inertia\Inertia;
+use App\Models\BookDocument;
+use App\Models\BookChunk;
 
 class BookController extends Controller
 {
@@ -138,10 +140,27 @@ public function show(Book $book)
         ->limit(20)
         ->get();
 
+
+        $userId = Auth::id();
+
+        $document = BookDocument::where('book_id', $book->id)
+            ->where('user_id', $userId)
+            ->first();
+    
+        $chunksPreview = [];
+        if ($document) {
+            $chunksPreview = BookChunk::where('book_document_id', $document->id)
+                ->orderBy('chunk_index')
+                ->limit(5)
+                ->get();
+        }
+
     return Inertia::render('Books/Show', [
         'book' => $book,
         'highlights' => $highlights,
         'orphanHighlights' => $orphanHighlights,
+        'document' => $document,
+        'chunksPreview' => $chunksPreview,
     ]);
 }
 
