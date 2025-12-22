@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\HighlightImportController;
 use App\Http\Controllers\BookHighlightController;
+use App\Http\Controllers\BookDocumentController;
 
 
 Route::get('/', function () {
@@ -35,6 +36,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/books', [BookController::class, 'store'])
         ->name('books.store');
+
+        Route::post('/books/{book}/document/upload', [BookDocumentController::class, 'uploadTxt'])
+        ->name('books.document.upload');
+
+    Route::post('/books/{book}/document/aozora-fetch', [BookDocumentController::class, 'fetchAozora'])
+        ->name('books.document.aozora_fetch');
 
         Route::get('/books/{book}', [BookController::class, 'show'])
     ->name('books.show');
