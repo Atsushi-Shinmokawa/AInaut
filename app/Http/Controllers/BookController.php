@@ -17,6 +17,8 @@ use Inertia\Response;
 use Inertia\Inertia;
 use App\Models\BookDocument;
 use App\Models\BookChunk;
+use App\Models\BookThread;
+use App\Models\BookMessage;
 
 class BookController extends Controller
 {
@@ -155,12 +157,24 @@ public function show(Book $book)
                 ->get();
         }
 
+        $thread = BookThread::where('book_id', $book->id)->where('user_id', $userId)->first();
+
+$messages = [];
+if ($thread) {
+  $messages = BookMessage::where('book_thread_id', $thread->id)
+    ->orderBy('created_at')
+    ->limit(50)
+    ->get();
+}
+
     return Inertia::render('Books/Show', [
         'book' => $book,
         'highlights' => $highlights,
         'orphanHighlights' => $orphanHighlights,
         'document' => $document,
         'chunksPreview' => $chunksPreview,
+        'chatThread' => $thread,
+        'chatMessages' => $messages,
     ]);
 }
 
