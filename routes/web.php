@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\HighlightImportController;
 use App\Http\Controllers\BookHighlightController;
 use App\Http\Controllers\BookDocumentController;
+use App\Http\Controllers\BookChatController;
 
 
 Route::get('/', function () {
@@ -45,6 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/books/{book}', [BookController::class, 'show'])
     ->name('books.show');
+
+    Route::post('/books/{book}/chat/send', [BookChatController::class, 'send'])
+  ->name('books.chat.send');
 
 
     // マイ本棚（Bookの一覧）
