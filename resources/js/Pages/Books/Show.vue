@@ -55,6 +55,20 @@ const props = defineProps<{
                     {{ document ? "あり" : "なし" }}
                 </span>
             </Link>
+
+            <Link
+                :href="route('books.show', { book: book.id, tab: 'chat' })"
+                :class="tab === 'chat' ? 'font-bold' : ''"
+            >
+                💬 チャット
+            </Link>
+
+            <Link
+                :href="route('books.show', { book: book.id, tab: 'summary' })"
+                :class="tab === 'summary' ? 'font-bold' : ''"
+            >
+                🧠 要約
+            </Link>
         </div>
 
         <!-- 中身 -->
@@ -66,7 +80,26 @@ const props = defineProps<{
             />
         </div>
 
+        <div v-else-if="tab === 'document'">
+            <DocumentSection
+                :document="document"
+                :chunks-preview="chunksPreview"
+                :book-id="book.id"
+            />
+        </div>
+
+        <div v-else-if="tab === 'chat'">
+            <!-- ChatSection を置く -->
+            <div>チャット（準備中）</div>
+        </div>
+
+        <div v-else-if="tab === 'summary'">
+            <!-- SummarySection を置く -->
+            <div>要約（準備中）</div>
+        </div>
+
         <div v-else>
+            <!-- overview -->
             <!-- 既存の概要表示 -->
         </div>
     </div>
