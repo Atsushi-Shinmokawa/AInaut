@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBookRequest;
+use App\Models\AiSummary;
 use App\Models\Book;
 use App\Models\BookHighlight;
 use App\Services\BookSearchService;
@@ -167,6 +168,13 @@ if ($thread) {
     ->get();
 }
 
+$latestSummary = AiSummary::where('book_id', $book->id)
+  ->where(function($q) use ($userId) {
+      $q->whereNull('user_id')->orWhere('user_id', $userId);
+  })
+  ->orderByDesc('created_at')
+  ->first();
+
     return Inertia::render('Books/Show', [
         'book' => $book,
         'highlights' => $highlights,
@@ -175,6 +183,7 @@ if ($thread) {
         'chunksPreview' => $chunksPreview,
         'chatThread' => $thread,
         'chatMessages' => $messages,
+        'latestSummary' => $latestSummary,
     ]);
 }
 
