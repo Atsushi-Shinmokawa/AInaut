@@ -96,7 +96,11 @@ const props = defineProps<{
         </div>
 
         <div v-else-if="tab === 'summary'">
-            <!-- SummarySection を置く -->
+            <SummarySection
+                :book-id="book.id"
+                :latest-summary="latestSummary"
+            />
+
             <div>要約（準備中）</div>
         </div>
 
