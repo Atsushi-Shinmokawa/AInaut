@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { usePage, Link } from "@inertiajs/vue3";
 import HighlightsSection from "@/Pages/Books/HighlightsSection.vue";
 import DocumentSection from "@/Pages/Books/DocumentSection.vue";
+import ChatSection from "@/Pages/Books/ChatSection.vue";
 
 const page = usePage();
 
@@ -16,6 +17,8 @@ const props = defineProps<{
     orphanHighlights: any[];
     document: any | null;
     chunksPreview: any[];
+    chatThread: any | null;
+    chatMessages: any[];
 }>();
 </script>
 
@@ -89,8 +92,7 @@ const props = defineProps<{
         </div>
 
         <div v-else-if="tab === 'chat'">
-            <!-- ChatSection を置く -->
-            <div>チャット（準備中）</div>
+            <ChatSection :book-id="book.id" :chat-messages="chatMessages" />
         </div>
 
         <div v-else-if="tab === 'summary'">
