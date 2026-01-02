@@ -11,6 +11,7 @@ use App\Http\Controllers\HighlightImportController;
 use App\Http\Controllers\BookHighlightController;
 use App\Http\Controllers\BookDocumentController;
 use App\Http\Controllers\BookChatController;
+use App\Http\Controllers\BookSummaryController;
 
 
 Route::get('/', function () {
@@ -49,6 +50,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/books/{book}/chat/send', [BookChatController::class, 'send'])
   ->name('books.chat.send');
+
+  Route::post('/books/{book}/summary', [BookSummaryController::class, 'generate'])
+    ->name('books.summary.generate');
 
 
     // マイ本棚（Bookの一覧）
