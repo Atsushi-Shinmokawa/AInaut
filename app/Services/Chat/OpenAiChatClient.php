@@ -2,39 +2,38 @@
 
 namespace App\Services\Chat;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 class OpenAiChatClient
 {
-  public function chat(array $messages): string
-  {
-    $key = config('services.openai.key');
-    $model = config('services.openai.model');
-    $base = rtrim(config('services.openai.base_url'), '/');
-
-    if (!$key) {
-      throw new \RuntimeException('OPENAI_API_KEY が未設定です');
+    private function client(): PendingRequest
+    {
+        return Http::withToken(config('services.openai.key'))
+            ->baseUrl(config('services.openai.base_url', 'https://api.openai.com/v1'))
+            ->timeout(60);
     }
 
-    $res = Http::timeout(30)
-      ->retry(2, 300)
-      ->withToken($key)
-      ->post($base . '/chat/completions', [
-        'model' => $model,
-        'messages' => $messages,
-        'temperature' => 0.4,
-      ]);
+    /**
+     * OpenAI Chat Completions を叩いて、assistantの文字列だけ返す
+     *
+     * @param array $messages 例: [['role'=>'system','content'=>'...'], ...]
+     */
+    public function chat(array $messages, ?string $model = null, ?float $temperature = null): string
+    {
+        $model ??= config('services.openai.model', 'gpt-4o-mini');
+        $temperature ??= (float) config('services.openai.temperature', 0.4);
 
-    if (!$res->successful()) {
-      $msg = $res->json('error.message') ?? 'OpenAI API error';
-      throw new \RuntimeException($msg);
+        $res = $this->client()->post('/chat/completions', [
+            'model' => $model,
+            'messages' => $messages,
+            'temperature' => $temperature,
+        ]);
+
+        if (!$res->successful()) {
+            throw new \RuntimeException('OpenAI API error: ' . $res->body());
+        }
+
+        return (string) data_get($res->json(), 'choices.0.message.content', '');
     }
-
-    $content = $res->json('choices.0.message.content');
-    if (!is_string($content) || trim($content) === '') {
-      throw new \RuntimeException('AIの応答が空でした');
-    }
-
-    return $content;
-  }
 }
