@@ -4,6 +4,7 @@ import { usePage, Link } from "@inertiajs/vue3";
 import HighlightsSection from "@/Pages/Books/HighlightsSection.vue";
 import DocumentSection from "@/Pages/Books/DocumentSection.vue";
 import ChatSection from "@/Pages/Books/ChatSection.vue";
+import SummarySection from "@/Pages/Books/SummarySection.vue";
 
 const page = usePage();
 
@@ -19,6 +20,7 @@ const props = defineProps<{
     chunksPreview: any[];
     chatThread: any | null;
     chatMessages: any[];
+    latestSummary: any | null;
 }>();
 </script>
 
@@ -60,14 +62,18 @@ const props = defineProps<{
             </Link>
 
             <Link
-                :href="route('books.show', { book: book.id, tab: 'chat' })"
+                :href="
+                    route('books.show', { book: props.book.id, tab: 'chat' })
+                "
                 :class="tab === 'chat' ? 'font-bold' : ''"
             >
                 💬 チャット
             </Link>
 
             <Link
-                :href="route('books.show', { book: book.id, tab: 'summary' })"
+                :href="
+                    route('books.show', { book: props.book.id, tab: 'summary' })
+                "
                 :class="tab === 'summary' ? 'font-bold' : ''"
             >
                 🧠 要約
@@ -92,12 +98,15 @@ const props = defineProps<{
         </div>
 
         <div v-else-if="tab === 'chat'">
-            <ChatSection :book-id="book.id" :chat-messages="chatMessages" />
+            <ChatSection
+                :book-id="props.book.id"
+                :chat-messages="props.chatMessages"
+            />
         </div>
 
         <div v-else-if="tab === 'summary'">
             <SummarySection
-                :book-id="book.id"
+                :book-id="props.book.id"
                 :latest-summary="latestSummary"
             />
 
