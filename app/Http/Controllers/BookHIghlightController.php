@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class BookHighlightController extends Controller
 {
-    public function destroy(BookHighlight $highlight)
+    public function destroy(BookHighlight $highlight, Request $request)
     {
         abort_unless($highlight->user_id === $request->user()->id, 403);
         
