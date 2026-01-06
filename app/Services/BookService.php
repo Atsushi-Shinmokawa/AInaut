@@ -1,71 +1,53 @@
 <?php
 
-namespace App\Services\Ai;
+declare(strict_types=1);
 
-use App\Models\AiSummary;
+namespace App\Services;
+
+use App\DTO\BookData;
+use App\Models\Author;
 use App\Models\Book;
-use App\Services\Chat\BookContextBuilder;
-use App\Services\Chat\OpenAiChatClient;
+use Illuminate\Support\Str;
 
-class BookSummaryService
+class BookService
 {
-    public function __construct(
-        private OpenAiChatClient $openAi,
-        private BookContextBuilder $contextBuilder,
-    ) {}
-
     /**
-     * 本のデータ（highlight/chunks等）を材料に要約を生成し、DBへ保存
+     * 外部APIで取得した BookData をDBに永続化して Book を返す
+     * - authorは “最初の著者名” を採用（v1）
+     * - 同一ISBNが既にあれば update して返す（v1の安全策）
      */
-    public function generateAndSave(Book $book, string $userId): AiSummary
+    public function persist(BookData $data): Book
     {
-        $context = $this->contextBuilder->build($book, 9000);
+        $authorName = $data->authors[0] ?? 'Unknown';
 
-        $system = <<<SYS
-あなたは「厳密で読みやすい要約」を作る編集者です。
-条件:
-- 事実の飛躍をしない（根拠のない断定を避ける）
-- 箇条書きを活用して読みやすく
-- 重要語はなるべく原文の表現を維持
-- まず全体像→次にポイント→最後に短い結論
-SYS;
-
-        $user = <<<USR
-以下の資料をもとに、この本の要約を作ってください。
-
-【出力フォーマット】
-1) 3行まとめ（超短縮）
-2) 要点（箇条書き 5〜10個）
-3) キーワード（5〜12個）
-4) もう一歩深い読み（この本から得られる示唆を3つ）
-
-【資料】
-{$context}
-USR;
-
-        $messages = [
-            ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $user],
-        ];
-
-        $model = config('services.openai.summary_model', config('services.openai.model', 'gpt-4o-mini'));
-
-        $content = $this->openAi->chat(
-            $messages,
-            $model,
-            0.3, // 要約はブレを減らす
+        $author = Author::firstOrCreate(
+            ['name' => $authorName],
+            ['memo' => null],
         );
 
-        return AiSummary::create([
-            'book_id' => $book->id,
-            'user_id' => $userId,
-            'model_name' => $model,
-            'content' => $content,
-            'context_type' => 'general',
-            'meta' => [
-                'source' => 'highlights+chunks',
-                'max_chars' => 9000,
-            ],
-        ]);
+        // ISBNがあれば同一判定をしやすいので活用（なければ新規）
+        $book = null;
+        if (!empty($data->isbn)) {
+            $book = Book::where('isbn', $data->isbn)->first();
+        }
+
+        $payload = [
+            'author_id' => $author->id,
+            'title' => $data->title,
+            'subtitle' => $data->subTitle,
+            'isbn' => $data->isbn,
+            'publisher' => $data->publisher,
+            'published_at' => $data->publishedAt,
+            'description' => $data->description,
+            'cover_url' => $data->coverUrl,
+            'raw_api_response' => $data->rawResponse,
+        ];
+
+        if ($book) {
+            $book->fill($payload)->save();
+            return $book;
+        }
+
+        return Book::create($payload);
     }
 }
