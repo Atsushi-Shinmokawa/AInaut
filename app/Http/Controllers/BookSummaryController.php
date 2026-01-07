@@ -22,7 +22,20 @@ class BookSummaryController extends Controller
             return back()->with('success', 'AI要約を生成しました。');
         } catch (\Throwable $e) {
             report($e);
-            return back()->with('error', 'AI要約の生成に失敗しました。' . $e->getMessage());
+
+            $status = $e->response?->status();
+
+            if ($status === 429) {
+                return back()->with('error', 'AIが混雑しています。少し時間をおいて再度お試しください。');
+            }
+            if ($status === 401 || $status === 403) {
+                return back()->with('error', 'AI機能の設定に問題があります。管理者に連絡してください。');
+            }
+
+            return back()->with('error', 'AI要約の生成に失敗しました。時間をおいて再度お試しください。');
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->with('error', '予期しないエラーが発生しました。時間をおいて再度お試しください。');
         }
     }
 }

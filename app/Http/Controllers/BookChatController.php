@@ -87,7 +87,21 @@ class BookChatController extends Controller
         ]);
       });
     } catch (\Throwable $e) {
-      return back()->with('error', $e->getMessage());
+      report($e);
+
+      $status = $e->response?->status();
+
+      if ($status === 429) {
+        return back()->with('error', 'AIが混雑しています。少し時間をおいて再度お試しください。');
+      }
+      if ($status === 401 || $status === 403) {
+        return back()->with('error', 'AI機能の設定に問題があります。管理者に連絡してください。');
+      }
+
+      return back()->with('error', 'AIとの通信に失敗しました。時間をおいて再度お試しください。');
+    } catch (\Throwable $e) { // ★既存を置き換え
+      report($e);
+      return back()->with('error', '予期しないエラーが発生しました。時間をおいて再度お試しください。');
     }
 
     return back()->with('success', '送信しました');
