@@ -129,62 +129,13 @@ public function index(Request $request): Response
         'items' => $items,
     ]);
 }
-public function show(Book $book)
+public function show(Book $book, BookShowQueryService $service)
 {
-    // この本に紐づいているハイライト
-    $highlights = BookHighlight::where('book_id', $book->id)
-        ->orderByDesc('created_at')
-        ->get();
+    $userId = (string) Auth::id();
 
-    // 未紐付け救済候補（title_raw が近いもの）
-    $orphanHighlights = BookHighlight::whereNull('book_id')
-        ->whereNotNull('title_raw')
-        ->where('title_raw', 'like', '%' . $book->title . '%')
-        ->limit(20)
-        ->get();
+    $props = $service->buildProps($book, $userId);
 
-
-        $userId = Auth::id();
-
-        $document = BookDocument::where('book_id', $book->id)
-            ->where('user_id', $userId)
-            ->first();
-    
-        $chunksPreview = [];
-        if ($document) {
-            $chunksPreview = BookChunk::where('book_document_id', $document->id)
-                ->orderBy('chunk_index')
-                ->limit(5)
-                ->get();
-        }
-
-        $thread = BookThread::where('book_id', $book->id)->where('user_id', $userId)->first();
-
-$messages = [];
-if ($thread) {
-  $messages = BookMessage::where('book_thread_id', $thread->id)
-    ->orderBy('created_at')
-    ->limit(50)
-    ->get();
-}
-
-$latestSummary = AiSummary::where('book_id', $book->id)
-  ->where(function($q) use ($userId) {
-      $q->whereNull('user_id')->orWhere('user_id', $userId);
-  })
-  ->orderByDesc('created_at')
-  ->first();
-
-    return Inertia::render('Books/Show', [
-        'book' => $book,
-        'highlights' => $highlights,
-        'orphanHighlights' => $orphanHighlights,
-        'document' => $document,
-        'chunksPreview' => $chunksPreview,
-        'chatThread' => $thread,
-        'chatMessages' => $messages,
-        'latestSummary' => $latestSummary,
-    ]);
+    return Inertia::render('Books/Show', $props);
 }
 
 }
