@@ -28,41 +28,21 @@ class BookController extends Controller
         private readonly BookService $bookService
     ) {}
 
-    /**
-     * ISBNを受け取り、本を検索して保存する
-     */
-    public function store(StoreBookRequest $request): RedirectResponse
-    {
-        // 1. バリデーション済みのデータを取得
-        $rawIsbn = $request->validated('isbn');
+    public function store(StoreBookRequest $request, AddBookToShelfService $shelfService): RedirectResponse
+{
+    $rawIsbn = $request->validated('isbn');
+    $isbn = preg_replace('/[^0-9Xx]/', '', $rawIsbn);
 
-        $isbn    = preg_replace('/[^0-9Xx]/', '', $rawIsbn);
+    $bookData = $this->searchService->searchByIsbn($isbn);
 
-        // 2. Google Books APIで検索 (なければ404エラーを返す例)
-        $bookData = $this->searchService->searchByIsbn($isbn);
+    if (!$bookData) {
+        return back()->with('error', '本が見つかりませんでした。');
+    }
 
-        if (!$bookData) {
-            // JSONではなく、元の画面へ戻ってエラーメッセージを渡す
-            return back()->with('error', '本が見つかりませんでした。');
-
-        }
-
-        // 3. データベースに保存 (Authorも自動処理)
-        $book = $this->bookService->persist($bookData);
-
-        // ⭐ v1でも「マイ本棚」に紐づくようにしておく
-    ReadingLog::firstOrCreate(
-        [
-            'user_id' => Auth::id(),
-            'book_id' => $book->id,
-        ],
-        [
-            'status' => 'want_to_read',
-        ],
-    );
+    $shelfService->add((string) Auth::id(), $bookData);
 
     return back()->with('success', '本棚に追加しました。');
-    }
+}
 
     /**
      * 書籍検索画面を表示する（または検索処理を行う）
@@ -112,21 +92,8 @@ public function index(Request $request): Response
         ->latest()
         ->get();
 
-    // Inertia に渡すために、最低限の形に整形
-    $items = $logs->map(fn ($log) => [
-        'id'        => $log->id,
-        'status'    => $log->status,
-        'created_at'=> $log->created_at?->toDateString(),
-        'book' => [
-            'id'        => $log->book->id,
-            'title'     => $log->book->title,
-            'author'    => $log->book->author?->name,
-            'cover_url' => $log->book->cover_url,
-        ],
-    ]);
-
     return inertia('Books/Index', [
-        'items' => $items,
+        'items' => ReadingLogResource::collection($logs),
     ]);
 }
 public function show(Book $book, BookShowQueryService $service)
