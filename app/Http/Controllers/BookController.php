@@ -86,7 +86,7 @@ class BookController extends Controller
 
         if ($bookData) {
             $books = [
-                [x
+                [
                     'title'     => $bookData->title,
                     'authors'   => $bookData->authors,
                     'isbn'      => $bookData->isbn,
