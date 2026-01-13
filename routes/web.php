@@ -56,11 +56,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // マイ本棚（Bookの一覧）
-    Route::get('/my-books', [ReadingLogController::class, 'index'])
+    Route::get('/my-books', [ReadingLogController::class, 'list'])
         ->name('reading-logs.index');
 
     // 読書ログ一覧
-    Route::get('/reading-logs', [ReadingLogController::class, 'index'])
+    Route::get('/reading-logs', [ReadingLogController::class, 'list'])
         ->name('reading-logs.index');
 
     Route::post('/reading-logs', [ReadingLogController::class, 'store'])
