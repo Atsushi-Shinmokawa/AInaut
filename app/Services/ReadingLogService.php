@@ -9,15 +9,35 @@ use Illuminate\Support\Collection;
 class ReadingLogService
 {
     /**
-     * ログインユーザーの読書ログ一覧を取得
+     * ログインユーザーの読書ログ一覧を取得（Inertia用に整形済み）
      */
-    public function listForUser(User $user): Collection
+    public function list(User $user): array
     {
-        return ReadingLog::query()
-            ->with('book')
+        $readingLogs = ReadingLog::query()
+            ->with(['book.author', 'readingNotes'])
             ->where('user_id', $user->id)
-            ->orderByDesc('created_at')
+            ->latest()
             ->get();
+
+        return [
+            'readingLogs' => $readingLogs->map(fn (ReadingLog $log) => [
+                'id'       => $log->id,
+                'status'   => $log->status,
+                'added_at' => $log->created_at->format('Y-m-d'),
+                'book'     => [
+                    'id'     => $log->book->id,
+                    'title'  => $log->book->title,
+                    'author' => optional($log->book->author)->name,
+                ],
+                'notes' => $log->readingNotes->map(fn ($note) => [
+                    'id'         => $note->id,
+                    'content'    => $note->content,
+                    'page'       => $note->page_number,
+                    'created_at' => $note->created_at->format('Y-m-d H:i'),
+                ])->values(),
+            ]),
+            'statuses' => ReadingLog::statuses(),
+        ];
     }
 
     /**
