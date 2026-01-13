@@ -12,6 +12,7 @@ use App\Services\ReadingLogService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Auth;
 
 class ReadingLogController extends Controller
 {
@@ -21,7 +22,7 @@ class ReadingLogController extends Controller
 
     public function list(): Response
 {
-    $props = $this->readingLogService->list(auth()->user());
+    $props = $this->readingLogService->list(Auth::user());
 
     return Inertia::render('ReadingLogs/Index', $props);
 }
