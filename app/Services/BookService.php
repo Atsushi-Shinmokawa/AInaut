@@ -7,10 +7,15 @@ namespace App\Services;
 use App\DTO\BookData;
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\ReadingLog;
 use Illuminate\Support\Str;
 
 class BookService
 {
+
+public function __construct(
+        private readonly BookSearchService $searchService,
+    ) {}
     /**
      * 外部APIで取得した BookData をDBに永続化して Book を返す
      * - authorは “最初の著者名” を採用（v1）
@@ -50,4 +55,28 @@ class BookService
 
         return Book::create($payload);
     }
+
+
+public function store(string $rawIsbn, string $userId): array
+{
+    // ISBN正規化
+    $isbn = preg_replace('/[^0-9Xx]/', '', $rawIsbn);
+
+    // 書籍検索
+    $bookData = $this->searchService->searchByIsbn($isbn);
+    if (!$bookData) {
+        return ['success' => false, 'message' => '本が見つかりませんでした。'];
+    }
+
+    // 書籍保存
+    $book = $this->persist($bookData);
+
+    // ReadingLog作成
+    ReadingLog::firstOrCreate(
+        ['user_id' => $userId, 'book_id' => $book->id],
+        ['status' => 'want_to_read'],
+    );
+
+    return ['success' => true, 'message' => '本棚に追加しました。'];
+}
 }
