@@ -31,38 +31,19 @@ class BookController extends Controller
     /**
      * ISBNを受け取り、本を検索して保存する
      */
-    public function store(StoreBookRequest $request): RedirectResponse
-    {
-        // 1. バリデーション済みのデータを取得
-        $rawIsbn = $request->validated('isbn');
-
-        $isbn    = preg_replace('/[^0-9Xx]/', '', $rawIsbn);
-
-        // 2. Google Books APIで検索 (なければ404エラーを返す例)
-        $bookData = $this->searchService->searchByIsbn($isbn);
-
-        if (!$bookData) {
-            // JSONではなく、元の画面へ戻ってエラーメッセージを渡す
-            return back()->with('error', '本が見つかりませんでした。');
-
-        }
-
-        // 3. データベースに保存 (Authorも自動処理)
-        $book = $this->bookService->persist($bookData);
-
-        // ⭐ v1でも「マイ本棚」に紐づくようにしておく
-    ReadingLog::firstOrCreate(
-        [
-            'user_id' => Auth::id(),
-            'book_id' => $book->id,
-        ],
-        [
-            'status' => 'want_to_read',
-        ],
+    // BookController
+public function store(StoreBookRequest $request): RedirectResponse
+{
+    $result = $this->bookService->store(
+        $request->validated('isbn'),
+        (string) Auth::id()
     );
 
-    return back()->with('success', '本棚に追加しました。');
-    }
+    return back()->with(
+        $result['success'] ? 'success' : 'error',
+        $result['message']
+    );
+}
 
     /**
      * 書籍検索画面を表示する（または検索処理を行う）
