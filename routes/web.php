@@ -7,7 +7,6 @@ use App\Http\Controllers\ReadingLogController;
 use App\Http\Controllers\ReadingNoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\HighlightImportController;
 use App\Http\Controllers\BookHighlightController;
 use App\Http\Controllers\BookDocumentController;
 use App\Http\Controllers\BookChatController;
@@ -80,9 +79,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::delete('/reading-logs/{readingLog}/notes/{readingNote}', [ReadingNoteController::class, 'destroy'])
     ->name('reading-notes.destroy');
 
-    Route::get('/imports/kindle', [HighlightImportController::class, 'create'])->name('imports.kindle.create');
-    Route::post('/imports/kindle/preview', [HighlightImportController::class, 'preview'])->name('imports.kindle.preview');
-    Route::post('/imports/kindle/commit', [HighlightImportController::class, 'commit'])->name('imports.kindle.commit');
+
 
     // ハイライト関連
     Route::get('/imports/kindle', [BookHighlightController::class, 'importCreate'])
