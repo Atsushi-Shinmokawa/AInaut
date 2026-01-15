@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\BookChunk;
 use App\Models\BookDocument;
+use App\Services\BookDocumentService;
 use App\Services\Document\AozoraFetcher;
 use App\Services\Document\TextChunker;
 use Illuminate\Http\Request;
@@ -15,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class BookDocumentController extends Controller
 {
+    public function __construct(
+        private readonly BookDocumentService $bookDocumentService,
+    ) {}
+
     public function uploadTxt(Request $request, Book $book, TextChunker $chunker)
     {
         $data = $request->validate([
@@ -27,14 +32,17 @@ class BookDocumentController extends Controller
             throw ValidationException::withMessages(['txt' => 'ファイルの読み取りに失敗しました。']);
         }
 
-        // 文字コード（最小）
+        // 文字コード変換
         $text = mb_check_encoding($raw, 'UTF-8')
             ? $raw
             : (mb_convert_encoding($raw, 'UTF-8', 'SJIS-win') ?: $raw);
 
-        $path = $this->storeText($book, $text, 'upload_txt', null, $file->getClientOriginalName());
-
-        $this->persistDocumentAndChunks($book, $text, $path, 'upload_txt', null, $file->getClientOriginalName(), $chunker);
+        $this->bookDocumentService->uploadTxt(
+            $book,
+            $text,
+            $file->getClientOriginalName(),
+            $chunker
+        );
 
         return redirect()
             ->route('books.show', ['book' => $book->id, 'tab' => 'document'])
@@ -53,12 +61,12 @@ class BookDocumentController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $text = $result['text'];
-        $resolvedUrl = $result['resolved_url'];
-
-        $path = $this->storeText($book, $text, 'aozora_fetch', $resolvedUrl, null);
-
-        $this->persistDocumentAndChunks($book, $text, $path, 'aozora_fetch', $resolvedUrl, null, $chunker);
+        $this->bookDocumentService->fetchAozora(
+            $book,
+            $result['text'],
+            $result['resolved_url'],
+            $chunker
+        );
 
         return redirect()
             ->route('books.show', ['book' => $book->id, 'tab' => 'document'])
