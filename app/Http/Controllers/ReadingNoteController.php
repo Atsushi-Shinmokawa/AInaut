@@ -1,21 +1,27 @@
 <?php
 
-namespace App\Http\Controllers;   // ★ これ必須！
+namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreReadingNoteRequest;
 use App\Models\ReadingLog;
 use App\Models\ReadingNote;
+use App\Services\ReadingNoteService;
 use Illuminate\Http\RedirectResponse;
 
 class ReadingNoteController extends Controller
 {
+    public function __construct(
+        private readonly ReadingNoteService $readingNoteService,
+    ) {}
+
     public function store(
         StoreReadingNoteRequest $request,
         ReadingLog $readingLog
     ): RedirectResponse {
         // $this->authorize('update', $readingLog); // あれば
 
-        $readingLog->readingNotes()->create(
+        $this->readingNoteService->store(
+            $readingLog,
             $request->validated()
         );
 
@@ -28,11 +34,7 @@ class ReadingNoteController extends Controller
     ): RedirectResponse {
         // $this->authorize('update', $readingLog); // あれば
 
-        if ($readingNote->reading_log_id !== $readingLog->id) {
-            abort(404);
-        }
-
-        $readingNote->delete();
+        $this->readingNoteService->destroy($readingLog, $readingNote);
 
         return back()->with('success', 'メモを削除しました。');
     }
