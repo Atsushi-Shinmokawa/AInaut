@@ -9,9 +9,6 @@ use App\Services\BookDocumentService;
 use App\Services\Document\AozoraFetcher;
 use App\Services\Document\TextChunker;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class BookDocumentController extends Controller
@@ -73,61 +70,4 @@ class BookDocumentController extends Controller
             ->with('success', '青空文庫から本文を取り込みました。');
     }
 
-    private function storeText(Book $book, string $text, string $source, ?string $sourceUrl, ?string $originalFilename): string
-    {
-        $userId = Auth::id();
-        $dir = "book_documents/{$userId}/{$book->id}";
-        $filename = now()->format('Ymd_His') . "_{$source}.txt";
-
-        // localディスク（storage/app）に保存
-        $path = "{$dir}/{$filename}";
-        Storage::disk('local')->put($path, $text);
-
-        return $path;
-    }
-
-    private function persistDocumentAndChunks(
-        Book $book,
-        string $text,
-        string $storagePath,
-        string $source,
-        ?string $sourceUrl,
-        ?string $originalFilename,
-        TextChunker $chunker
-    ): void {
-        $userId = Auth::id();
-
-        DB::transaction(function () use ($book, $text, $storagePath, $source, $sourceUrl, $originalFilename, $chunker, $userId) {
-            // 既存があるなら「最新版だけ残す」か「複数保持」か決められるが、
-            // v1は簡単に「既存を削除して差し替え」でOK（迷いが減る）
-            $existing = BookDocument::where('book_id', $book->id)->where('user_id', $userId)->first();
-            if ($existing) {
-                BookChunk::where('book_document_id', $existing->id)->delete();
-                $existing->delete();
-            }
-
-            $doc = BookDocument::create([
-                'user_id' => $userId,
-                'book_id' => $book->id,
-                'source' => $source,
-                'source_url' => $sourceUrl,
-                'original_filename' => $originalFilename,
-                'storage_path' => $storagePath,
-                'text_length' => mb_strlen($text),
-            ]);
-
-            $chunks = $chunker->chunk($text, 800, 1200);
-
-            foreach ($chunks as $i => $content) {
-                BookChunk::create([
-                    'user_id' => $userId,
-                    'book_id' => $book->id,
-                    'book_document_id' => $doc->id,
-                    'chunk_index' => $i + 1,
-                    'content' => $content,
-                    'char_length' => mb_strlen($content),
-                ]);
-            }
-        });
-    }
 }
