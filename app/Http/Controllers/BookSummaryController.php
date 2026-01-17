@@ -10,12 +10,17 @@ use Illuminate\Http\Client\RequestException;
 
 class BookSummaryController extends Controller
 {
-    public function generate(Book $book, BookSummaryService $service): RedirectResponse
+
+public function __construct(
+        private readonly BookSummaryService $bookSummaryService,
+    ) {}
+
+    public function generate(Book $book): RedirectResponse
     {
         $userId = (string) Auth::id();
 
         try {
-            $service->generateAndSave($book, $userId);
+            $this->bookSummaryService->generateAndSave($book, $userId);
 
             return back()->with('success', 'AI要約を生成しました。');
         } catch (RequestException $e) {

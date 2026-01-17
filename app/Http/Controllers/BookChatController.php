@@ -10,7 +10,11 @@ use Illuminate\Http\Client\RequestException;
 
 class BookChatController extends Controller
 {
-    public function send(Request $request, Book $book, BookChatService $service)
+    public function __construct(
+        private readonly BookChatService $bookChatService,
+    ) {}
+
+    public function send(Request $request, Book $book)
     {
         $data = $request->validate([
             'content' => ['required', 'string', 'max:4000'],
@@ -19,7 +23,7 @@ class BookChatController extends Controller
         $userId = (string) Auth::id();
 
         try {
-            $service->send($book, $userId, $data['content']);
+            $this->bookChatService->send($book, $userId, $data['content']);
             return back()->with('success', '送信しました');
         } catch (RequestException $e) {
             report($e);
