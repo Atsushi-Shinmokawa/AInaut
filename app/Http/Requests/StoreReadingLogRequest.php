@@ -5,9 +5,7 @@
 namespace App\Http\Requests;
 
 use App\Models\ReadingLog;
-use Illuminate\Foundation\Http\FormRequest;
-
-class StoreReadingLogRequest extends FormRequest
+class StoreReadingLogRequest extends AbstractFormRequest
 {
     public function authorize(): bool
     {
