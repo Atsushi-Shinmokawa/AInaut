@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookHighlightAttachRequest;
+use App\Http\Requests\BookHighlightImportCommitRequest;
+use App\Http\Requests\BookHighlightImportPreviewRequest;
 use App\Models\BookHighlight;
 use App\Services\BookHighlightService;
 use App\Services\Highlight\KindleHighlightParser;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,14 +29,10 @@ class BookHighlightController extends Controller
     /**
      * Kindleハイライトインポートのプレビュー
      */
-    public function importPreview(Request $request, KindleHighlightParser $parser): Response
+    public function importPreview(BookHighlightImportPreviewRequest $request, KindleHighlightParser $parser): Response
     {
-        $data = $request->validate([
-            'raw_text' => ['required', 'string', 'min:20'],
-        ]);
-
         try {
-            $props = $this->bookHighlightService->importPreview($data['raw_text'], $parser);
+            $props = $this->bookHighlightService->importPreview($request->validated('raw_text'), $parser);
             return Inertia::render('Imports/Kindle/Preview', $props);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
@@ -44,21 +42,10 @@ class BookHighlightController extends Controller
     /**
      * Kindleハイライトインポートの実行
      */
-    public function importCommit(Request $request): RedirectResponse
+    public function importCommit(BookHighlightImportCommitRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.source' => ['required', 'string'],
-            'items.*.title_raw' => ['nullable', 'string'],
-            'items.*.location' => ['nullable', 'string'],
-            'items.*.page' => ['nullable', 'string'],
-            'items.*.highlighted_at' => ['nullable', 'string'],
-            'items.*.content' => ['required', 'string'],
-            'items.*.content_hash' => ['nullable', 'string'],
-        ]);
-
         $userId = $request->user()->id;
-        $result = $this->bookHighlightService->importCommit($data['items'], $userId);
+        $result = $this->bookHighlightService->importCommit($request->validated('items'), $userId);
 
         return redirect()
             ->route('imports.kindle.create')
@@ -68,9 +55,9 @@ class BookHighlightController extends Controller
     /**
      * ハイライトを削除
      */
-    public function destroy(BookHighlight $highlight, Request $request): RedirectResponse
+    public function destroy(BookHighlight $highlight): RedirectResponse
     {
-        $this->bookHighlightService->destroy($highlight, $request->user()->id);
+        $this->bookHighlightService->destroy($highlight, auth()->id());
 
         return back()->with('success', 'ハイライトを削除しました');
     }
@@ -78,13 +65,9 @@ class BookHighlightController extends Controller
     /**
      * ハイライトを本に紐付け
      */
-    public function attach(BookHighlight $highlight, Request $request): RedirectResponse
+    public function attach(BookHighlight $highlight, BookHighlightAttachRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'book_id' => ['required', 'uuid'],
-        ]);
-
-        $this->bookHighlightService->attach($highlight, $data['book_id']);
+        $this->bookHighlightService->attach($highlight, $request->validated('book_id'));
 
         return back()->with('success', 'ハイライトを本に紐付けました');
     }
