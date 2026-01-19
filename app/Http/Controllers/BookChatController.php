@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookChatSendRequest;
 use App\Models\Book;
 use App\Services\Chat\BookChatService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Auth;
 
 class BookChatController extends Controller
 {
@@ -14,16 +14,12 @@ class BookChatController extends Controller
         private readonly BookChatService $bookChatService,
     ) {}
 
-    public function send(Request $request, Book $book)
+    public function send(BookChatSendRequest $request, Book $book)
     {
-        $data = $request->validate([
-            'content' => ['required', 'string', 'max:4000'],
-        ]);
-
         $userId = (string) Auth::id();
 
         try {
-            $this->bookChatService->send($book, $userId, $data['content']);
+            $this->bookChatService->send($book, $userId, $request->validated('content'));
             return back()->with('success', '送信しました');
         } catch (RequestException $e) {
             report($e);
