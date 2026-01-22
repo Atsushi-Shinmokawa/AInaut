@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookSearchRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
 use App\Services\BookService;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
@@ -40,11 +40,9 @@ public function store(StoreBookRequest $request): RedirectResponse
      * @param Request $request
      * @return Response
      */
-    public function search(Request $request): Response
+    public function search(BookSearchRequest $request): Response
     {
-        $query = $request->input('q', '');
-
-        $props = $this->bookService->search($query);
+        $props = $this->bookService->search($request->validated('q', ''));
 
         return Inertia::render('Books/Search', $props);
     }
