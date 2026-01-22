@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Book;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\AbstractFormRequest;
 
-class BookListRequest extends FormRequest
+class BookListRequest extends AbstractFormRequest
 {
     public function authorize(): bool
     {
