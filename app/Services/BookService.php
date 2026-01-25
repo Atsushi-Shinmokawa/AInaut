@@ -14,6 +14,9 @@ use App\Models\BookChunk;
 use App\Models\BookThread;
 use App\Models\BookMessage;
 use App\Models\AiSummary;
+use App\Resources\BookChunkResource;
+use App\Resources\BookHighlightResource;
+use App\Resources\BookMessageResource;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -146,35 +149,21 @@ class BookService
     public function buildShowProps(Book $book, string $userId): array
     {
         // 1. この本に紐づくハイライト（book_idが設定されているもの）
-        $highlights = BookHighlight::where('book_id', $book->id)
-            ->where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn ($h) => [
-                'id' => $h->id,
-                'content' => $h->content,
-                'page' => $h->page,
-                'location' => $h->location,
-                'created_at' => $h->created_at?->toIso8601String(),
-                'title_raw' => $h->title_raw,
-            ])
-            ->toArray();
+        $highlights = BookHighlightResource::collection(
+            BookHighlight::where('book_id', $book->id)
+                ->where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->get()
+        )->resolve();
 
         // 2. 未紐付けのハイライト（book_idがnullのもの）
         // 取り込み時の書名が近いものを候補として表示
-        $orphanHighlights = BookHighlight::whereNull('book_id')
-            ->where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn ($h) => [
-                'id' => $h->id,
-                'content' => $h->content,
-                'page' => $h->page,
-                'location' => $h->location,
-                'created_at' => $h->created_at?->toIso8601String(),
-                'title_raw' => $h->title_raw,
-            ])
-            ->toArray();
+        $orphanHighlights = BookHighlightResource::collection(
+            BookHighlight::whereNull('book_id')
+                ->where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->get()
+        )->resolve();
 
         // 3. 本文ドキュメント
         $document = BookDocument::where('book_id', $book->id)
@@ -184,16 +173,12 @@ class BookService
         // 4. チャンクプレビュー（最初の3つ）
         $chunksPreview = [];
         if ($document) {
-            $chunksPreview = $document->chunks()
-                ->orderBy('chunk_index')
-                ->limit(3)
-                ->get()
-                ->map(fn ($c) => [
-                    'id' => $c->id,
-                    'content' => $c->content,
-                    'chunk_index' => $c->chunk_index,
-                ])
-                ->toArray();
+            $chunksPreview = BookChunkResource::collection(
+                $document->chunks()
+                    ->orderBy('chunk_index')
+                    ->limit(3)
+                    ->get()
+            )->resolve();
         }
 
         // 5. チャットスレッドとメッセージ
@@ -203,16 +188,11 @@ class BookService
 
         $chatMessages = [];
         if ($chatThread) {
-            $chatMessages = BookMessage::where('book_thread_id', $chatThread->id)
-                ->orderBy('created_at', 'asc')
-                ->get()
-                ->map(fn ($m) => [
-                    'id' => $m->id,
-                    'role' => $m->role,
-                    'content' => $m->content,
-                    'created_at' => $m->created_at?->toIso8601String(),
-                ])
-                ->toArray();
+            $chatMessages = BookMessageResource::collection(
+                BookMessage::where('book_thread_id', $chatThread->id)
+                    ->orderBy('created_at', 'asc')
+                    ->get()
+            )->resolve();
         }
 
         // 6. 最新の要約
