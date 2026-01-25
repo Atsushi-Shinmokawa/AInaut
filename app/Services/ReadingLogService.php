@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ReadingLog;
 use App\Models\User;
+use App\Resources\ReadingLogResource;
 use Illuminate\Support\Collection;
 
 class ReadingLogService
@@ -20,22 +21,7 @@ class ReadingLogService
             ->get();
 
         return [
-            'readingLogs' => $readingLogs->map(fn (ReadingLog $log) => [
-                'id'       => $log->id,
-                'status'   => $log->status,
-                'added_at' => $log->created_at->format('Y-m-d'),
-                'book'     => [
-                    'id'     => $log->book->id,
-                    'title'  => $log->book->title,
-                    'author' => optional($log->book->author)->name,
-                ],
-                'notes' => $log->readingNotes->map(fn ($note) => [
-                    'id'         => $note->id,
-                    'content'    => $note->content,
-                    'page'       => $note->page_number,
-                    'created_at' => $note->created_at->format('Y-m-d H:i'),
-                ])->values(),
-            ]),
+            'readingLogs' => ReadingLogResource::collection($readingLogs)->resolve(),
             'statuses' => ReadingLog::statuses(),
         ];
     }
