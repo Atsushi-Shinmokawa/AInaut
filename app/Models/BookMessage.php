@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BookMessageRole;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
@@ -16,5 +17,9 @@ class BookMessage extends Model
     'role',
     'content',
     'char_length',
+  ];
+
+  protected $casts = [
+    'role' => BookMessageRole::class,
   ];
 }

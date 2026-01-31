@@ -2,6 +2,7 @@
 
 namespace App\Services\Chat;
 
+use App\Enums\BookMessageRole;
 use App\Models\Book;
 use App\Models\BookMessage;
 use App\Models\BookThread;
@@ -32,7 +33,7 @@ class BookChatService
                 'book_thread_id' => $thread->id,
                 'user_id'        => $userId,
                 'book_id'        => $book->id,
-                'role'           => 'user',
+                'role'           => BookMessageRole::USER,
                 'content'        => $content,
                 'char_length'    => mb_strlen($content),
             ]);
@@ -51,20 +52,20 @@ class BookChatService
         $messages = [];
 
         $messages[] = [
-            'role' => 'system',
+            'role' => BookMessageRole::SYSTEM->value,
             'content' =>
 "あなたは読書支援AIです。回答は日本語で、根拠がある場合は「どの情報（highlights/chunks）に基づくか」を短く添えてください。
 不確かな場合は推測と断り、必要なら質問して確認してください。",
         ];
 
         $messages[] = [
-            'role' => 'system',
+            'role' => BookMessageRole::SYSTEM->value,
             'content' => "以下は本の関連情報です。回答に活用してください。\n\n" . $bookContext,
         ];
 
         foreach ($recent as $m) {
             $messages[] = [
-                'role' => $m->role,
+                'role' => $m->role->value,
                 'content' => $m->content,
             ];
         }
@@ -78,7 +79,7 @@ class BookChatService
                 'book_thread_id' => $thread->id,
                 'user_id'        => $userId,
                 'book_id'        => $book->id,
-                'role'           => 'assistant',
+                'role'           => BookMessageRole::ASSISTANT,
                 'content'        => $answer,
                 'char_length'    => mb_strlen($answer),
             ]);

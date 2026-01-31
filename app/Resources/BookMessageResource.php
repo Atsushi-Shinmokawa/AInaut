@@ -18,7 +18,7 @@ class BookMessageResource extends JsonResource
         /** @var BookMessage $this->resource */
         return [
             'id' => $this->resource->id,
-            'role' => $this->resource->role,
+            'role' => $this->resource->role->value,
             'content' => $this->resource->content,
             'created_at' => $this->resource->created_at?->toIso8601String(),
         ];

@@ -45,8 +45,8 @@ SYS;
 USR;
 
         $messages = [
-            ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $user],
+            ['role' => \App\Enums\BookMessageRole::SYSTEM->value, 'content' => $system],
+            ['role' => \App\Enums\BookMessageRole::USER->value, 'content' => $user],
         ];
 
         // 要約用モデル（未設定なら model と同じ）
