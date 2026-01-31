@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ReadingLogStatus;
 use App\Models\ReadingLog;
 use App\Models\User;
 use App\Resources\ReadingLogResource;
@@ -22,7 +23,7 @@ class ReadingLogService
 
         return [
             'readingLogs' => ReadingLogResource::collection($readingLogs)->resolve(),
-            'statuses' => ReadingLog::statuses(),
+            'statuses' => ReadingLogStatus::values(),
         ];
     }
 
@@ -31,7 +32,9 @@ class ReadingLogService
      */
     public function storeOrUpdate(User $user, array $data): ReadingLog
     {
-        $status = $data['status'] ?? ReadingLog::STATUS_WANT_TO_READ;
+        $status = isset($data['status'])
+            ? ReadingLogStatus::from($data['status'])
+            : ReadingLogStatus::WANT_TO_READ;
 
         $log = ReadingLog::firstOrNew([
             'user_id' => $user->id,
@@ -54,8 +57,13 @@ class ReadingLogService
     /**
      * ステータスだけ更新（マイ本棚のステータス切り替え用）
      */
-    public function updateStatus(ReadingLog $log, string $status): ReadingLog
+    public function updateStatus(ReadingLog $log, ReadingLogStatus|string $status): ReadingLog
     {
+        // 文字列の場合はEnumに変換
+        if (is_string($status)) {
+            $status = ReadingLogStatus::from($status);
+        }
+
         [$startedAt, $completedAt] = $this->calcDates($log, $status);
 
         $log->update([
@@ -78,35 +86,22 @@ class ReadingLogService
     /**
      * ステータスに応じて started_at / completed_at をよしなに調整
      */
-    private function calcDates(ReadingLog $log, string $status): array
+    private function calcDates(ReadingLog $log, ReadingLogStatus $status): array
     {
         $today       = now()->toDateString();
         $startedAt   = $log->started_at;
         $completedAt = $log->completed_at;
 
-        switch ($status) {
-            case ReadingLog::STATUS_WANT_TO_READ:
-                $startedAt   = null;
-                $completedAt = null;
-                break;
-
-            case ReadingLog::STATUS_READING:
-                if (! $startedAt) {
-                    $startedAt = $today;
-                }
-                $completedAt = null;
-                break;
-
-            case ReadingLog::STATUS_COMPLETED:
-                if (! $startedAt) {
-                    $startedAt = $today;
-                }
-                if (! $completedAt) {
-                    $completedAt = $today;
-                }
-                break;
-        }
-
-        return [$startedAt, $completedAt];
+        return match ($status) {
+            ReadingLogStatus::WANT_TO_READ => [null, null],
+            ReadingLogStatus::READING => [
+                $startedAt ?: $today,
+                null,
+            ],
+            ReadingLogStatus::COMPLETED => [
+                $startedAt ?: $today,
+                $completedAt ?: $today,
+            ],
+        };
     }
 }

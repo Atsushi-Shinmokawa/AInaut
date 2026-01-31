@@ -20,7 +20,7 @@ class UpdateReadingLogRequest extends AbstractFormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'in:' . implode(',', ReadingLog::statuses())],
+            'status' => ['required', 'string', 'in:' . implode(',', \App\Enums\ReadingLogStatus::values())],
         ];
     }
 }

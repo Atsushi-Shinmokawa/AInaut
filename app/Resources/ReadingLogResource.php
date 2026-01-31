@@ -18,7 +18,7 @@ class ReadingLogResource extends JsonResource
         /** @var ReadingLog $this->resource */
         return [
             'id' => $this->resource->id,
-            'status' => $this->resource->status,
+            'status' => $this->resource->status->value,
             'added_at' => $this->resource->created_at->format('Y-m-d'),
             'book' => [
                 'id' => $this->resource->book->id,
