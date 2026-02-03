@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BookChatSendRequest;
 use App\Models\Book;
 use App\Services\Chat\BookChatService;
-use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
 class BookChatController extends Controller
@@ -14,28 +14,13 @@ class BookChatController extends Controller
         private readonly BookChatService $bookChatService,
     ) {}
 
-    public function send(BookChatSendRequest $request, Book $book)
+    public function send(BookChatSendRequest $request, Book $book): RedirectResponse
     {
         $userId = (string) Auth::id();
 
-        try {
-            $this->bookChatService->send($book, $userId, $request->validated('content'));
-            return back()->with('success', '送信しました');
-        } catch (RequestException $e) {
-            report($e);
-
-            $status = $e->response?->status();
-            if ($status === 429) {
-                return back()->with('error', 'AIが混雑しています。少し時間をおいて再度お試しください。');
-            }
-            if ($status === 401 || $status === 403) {
-                return back()->with('error', 'AI機能の設定に問題があります。管理者に連絡してください。');
-            }
-
-            return back()->with('error', 'AIとの通信に失敗しました。時間をおいて再度お試しください。');
-        } catch (\Throwable $e) {
-            report($e);
-            return back()->with('error', '予期しないエラーが発生しました。時間をおいて再度お試しください。');
-        }
+        // 例外はGlobal Exception Handlerで自動的に処理される
+        $this->bookChatService->send($book, $userId, $request->validated('content'));
+        
+        return back()->with('success', '送信しました');
     }
 }

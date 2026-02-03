@@ -25,11 +25,8 @@ class BookDocumentController extends Controller
 
     public function fetchAozora(BookDocumentFetchAozoraRequest $request, Book $book): RedirectResponse
     {
-        try {
-            $this->bookDocumentService->fetchAozora($book, $request->validated('aozora_url'));
-        } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
+        // 例外はGlobal Exception Handlerで自動的に処理される
+        $this->bookDocumentService->fetchAozora($book, $request->validated('aozora_url'));
 
         return redirect()
             ->route('books.show', ['book' => $book->id, 'tab' => 'document'])

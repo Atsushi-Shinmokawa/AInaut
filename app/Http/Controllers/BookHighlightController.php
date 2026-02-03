@@ -31,12 +31,9 @@ class BookHighlightController extends Controller
      */
     public function importPreview(BookHighlightImportPreviewRequest $request, KindleHighlightParser $parser): Response
     {
-        try {
-            $props = $this->bookHighlightService->importPreview($request->validated('raw_text'), $parser);
-            return Inertia::render('Imports/Kindle/Preview', $props);
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
-        }
+        // 例外はGlobal Exception Handlerで自動的に処理される
+        $props = $this->bookHighlightService->importPreview($request->validated('raw_text'), $parser);
+        return Inertia::render('Imports/Kindle/Preview', $props);
     }
 
     /**
