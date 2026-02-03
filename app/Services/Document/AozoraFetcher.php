@@ -2,6 +2,8 @@
 
 namespace App\Services\Document;
 
+use App\Exceptions\AppServiceExternalApiException;
+use App\Exceptions\AppServiceValidationException;
 use Illuminate\Support\Facades\Http;
 
 class AozoraFetcher
@@ -27,7 +29,9 @@ class AozoraFetcher
 
         $txtUrl = $this->extractTxtUrl($html, $url);
         if (!$txtUrl) {
-            throw new \RuntimeException('青空文庫ページから txt のリンクが見つかりませんでした。txtファイルURLを直接貼ってください。');
+            throw new AppServiceValidationException(
+                '青空文庫ページから txt のリンクが見つかりませんでした。txtファイルURLを直接貼ってください。'
+            );
         }
 
         $txt = $this->get($txtUrl);
@@ -44,7 +48,13 @@ class AozoraFetcher
             ->get($url);
 
         if (!$res->successful()) {
-            throw new \RuntimeException("取得に失敗しました（HTTP {$res->status()}）");
+            throw new AppServiceExternalApiException(
+                '青空文庫からの取得に失敗しました。',
+                $res->status(),
+                '青空文庫',
+                $url,
+                null // レスポンスボディは通常不要
+            );
         }
 
         // 青空のtxtはShift_JISのことがあるので、HTTPヘッダと内容からざっくり変換
@@ -68,11 +78,13 @@ class AozoraFetcher
     private function assertAllowedHost(string $url): void
     {
         $host = parse_url($url, PHP_URL_HOST);
-        if (!$host) throw new \InvalidArgumentException('URLが不正です。');
+        if (!$host) {
+            throw new AppServiceValidationException('URLが不正です。');
+        }
 
         $allowed = ['www.aozora.gr.jp', 'aozora.gr.jp'];
         if (!in_array($host, $allowed, true)) {
-            throw new \InvalidArgumentException('青空文庫（aozora.gr.jp）のURLのみ許可しています。');
+            throw new AppServiceValidationException('青空文庫（aozora.gr.jp）のURLのみ許可しています。');
         }
     }
 

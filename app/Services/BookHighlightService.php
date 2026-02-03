@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppServiceForbiddenException;
+use App\Exceptions\AppServiceValidationException;
 use App\Models\BookHighlight;
 use App\Services\Highlight\HighlightHasher;
 use App\Services\Highlight\KindleHighlightParser;
@@ -18,11 +20,15 @@ class BookHighlightService
         try {
             $items = $parser->parse($rawText);
         } catch (\Throwable $e) {
-            throw new \RuntimeException('取り込み形式を認識できませんでした。Kindleのハイライト全文を貼り付けてください。');
+            throw new AppServiceValidationException(
+                '取り込み形式を認識できませんでした。Kindleのハイライト全文を貼り付けてください。'
+            );
         }
 
         if (empty($items)) {
-            throw new \RuntimeException('ハイライトが1件も見つかりませんでした。貼り付け内容を確認してください。');
+            throw new AppServiceValidationException(
+                'ハイライトが1件も見つかりませんでした。貼り付け内容を確認してください。'
+            );
         }
 
         return [
@@ -94,7 +100,7 @@ class BookHighlightService
     public function destroy(BookHighlight $highlight, string $userId): void
     {
         if ($highlight->user_id !== $userId) {
-            abort(403);
+            throw new AppServiceForbiddenException('このハイライトを削除する権限がありません。');
         }
 
         $highlight->delete();
