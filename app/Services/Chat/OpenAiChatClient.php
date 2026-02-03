@@ -2,6 +2,7 @@
 
 namespace App\Services\Chat;
 
+use App\Exceptions\AppServiceExternalApiException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
@@ -31,7 +32,13 @@ class OpenAiChatClient
         ]);
 
         if (!$res->successful()) {
-            throw new \RuntimeException('OpenAI API error: ' . $res->body());
+            throw new AppServiceExternalApiException(
+                'OpenAI APIとの通信に失敗しました。',
+                $res->status(),
+                'OpenAI',
+                '/chat/completions',
+                $res->body()
+            );
         }
 
         return (string) data_get($res->json(), 'choices.0.message.content', '');
