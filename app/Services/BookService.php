@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\BookData;
+use App\Enums\ReadingLogStatus;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\ReadingLog;
@@ -14,6 +15,7 @@ use App\Models\BookChunk;
 use App\Models\BookThread;
 use App\Models\BookMessage;
 use App\Models\AiSummary;
+use App\Resources\AiSummaryResource;
 use App\Resources\BookChunkResource;
 use App\Resources\BookHighlightResource;
 use App\Resources\BookMessageResource;
@@ -90,7 +92,7 @@ class BookService
         // ReadingLog作成
         ReadingLog::firstOrCreate(
             ['user_id' => $userId, 'book_id' => $book->id],
-            ['status' => 'want_to_read'],
+            ['status' => ReadingLogStatus::WANT_TO_READ],
         );
 
         return ['success' => true, 'message' => '本棚に追加しました。'];
@@ -217,11 +219,7 @@ class BookService
                 'id' => $chatThread->id,
             ] : null,
             'chatMessages' => $chatMessages,
-            'latestSummary' => $latestSummary ? [
-                'id' => $latestSummary->id,
-                'content' => $latestSummary->content,
-                'created_at' => $latestSummary->created_at?->toIso8601String(),
-            ] : null,
+            'latestSummary' => $latestSummary ? AiSummaryResource::make($latestSummary)->resolve() : null,
         ];
     }
 
