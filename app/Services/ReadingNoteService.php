@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppServiceNotFoundException;
 use App\Models\ReadingLog;
 use App\Models\ReadingNote;
 
@@ -22,7 +23,7 @@ class ReadingNoteService
     {
         // 親子関係の整合性チェック
         if ($readingNote->reading_log_id !== $readingLog->id) {
-            abort(404);
+            throw new AppServiceNotFoundException('読書ノートが見つかりませんでした。');
         }
 
         $readingNote->delete();
