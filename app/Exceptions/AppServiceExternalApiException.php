@@ -89,7 +89,35 @@ class AppServiceExternalApiException extends AppServiceException
      */
     public function isRateLimit(): bool
     {
-        return $this->apiStatusCode === 429;
+        if ($this->apiStatusCode !== 429) {
+            return false;
+        }
+
+        // 429エラーでも、クォータ不足の場合はレート制限ではない
+        return !$this->isQuotaExceeded();
+    }
+
+    /**
+     * クォータ不足エラーかどうか
+     */
+    public function isQuotaExceeded(): bool
+    {
+        if ($this->apiStatusCode !== 429) {
+            return false;
+        }
+
+        // レスポンスボディをパースして、insufficient_quotaエラーを検出
+        if ($this->apiResponseBody) {
+            $decoded = json_decode($this->apiResponseBody, true);
+            if (isset($decoded['error']['code']) && $decoded['error']['code'] === 'insufficient_quota') {
+                return true;
+            }
+            if (isset($decoded['error']['type']) && $decoded['error']['type'] === 'insufficient_quota') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -119,18 +147,35 @@ class AppServiceExternalApiException extends AppServiceException
 
     /**
      * 外部API例外をHTTPレスポンスに変換
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function toResponse(Request $request): RedirectResponse
+    public function toResponse($request): RedirectResponse
     {
         // ログに記録
         if ($this->shouldReport()) {
             $this->report();
         }
 
+        // クォータ不足エラーの場合
+        if ($this->isQuotaExceeded()) {
+            if ($this->apiName === 'OpenAI') {
+                return back()->with('error', 'OpenAI APIの利用可能なクレジットが不足しています。アカウント設定でクレジットを追加してください。');
+            }
+            return back()->with('error', 'APIの利用可能なクレジットが不足しています。アカウント設定を確認してください。');
+        }
+
+        // レート制限エラーの場合
         if ($this->isRateLimit()) {
+            // Google Books APIの場合は専用メッセージ
+            if ($this->apiName === 'Google Books API') {
+                return back()->with('error', '書籍検索の利用制限に達しました。しばらく時間をおいてから再度お試しください。');
+            }
             return back()->with('error', 'AIが混雑しています。少し時間をおいて再度お試しください。');
         }
 
+        // 認証エラーの場合
         if ($this->isAuthError()) {
             return back()->with('error', 'AI機能の設定に問題があります。管理者に連絡してください。');
         }

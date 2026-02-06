@@ -22,8 +22,11 @@ class AppServiceNotFoundException extends AppServiceException
 
     /**
      * 404エラーをHTTPレスポンスに変換
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function toResponse(Request $request): Response
+    public function toResponse($request): Response
     {
         // ログに記録
         if ($this->shouldReport()) {

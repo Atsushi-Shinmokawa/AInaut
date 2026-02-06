@@ -39,8 +39,11 @@ class AppServiceValidationException extends AppServiceException
      * バリデーションエラーをHTTPレスポンスに変換
      * 
      * ValidationExceptionをthrowすることで、Laravelの標準的なバリデーションエラー処理を行う
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function toResponse(Request $request): Response
+    public function toResponse($request): Response
     {
         // ログに記録
         if ($this->shouldReport()) {

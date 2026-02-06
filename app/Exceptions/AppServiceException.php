@@ -105,8 +105,11 @@ abstract class AppServiceException extends Exception implements Responsable
      * 例外をHTTPレスポンスに変換（LaravelのResponsableインターフェース）
      * 
      * このメソッドにより、例外をthrowするだけで自動的に適切なレスポンスが生成される
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function toResponse(Request $request): Response
+    public function toResponse($request): Response
     {
         // ログに記録
         if ($this->shouldReport()) {
@@ -138,9 +141,19 @@ abstract class AppServiceException extends Exception implements Responsable
 
     /**
      * 例外をHTTPレスポンスに変換
+     * 
+     * Laravelの例外ハンドラから直接呼び出される可能性があるため、publicにする
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    protected function render(Request $request): Response
+    public function render($request): Response
     {
+        // ログに記録
+        if ($this->shouldReport()) {
+            $this->report();
+        }
+
         // デフォルトの実装：リダイレクトでエラーメッセージを返す
         return back()->with('error', $this->getUserMessage());
     }
