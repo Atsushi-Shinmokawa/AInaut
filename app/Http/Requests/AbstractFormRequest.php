@@ -10,27 +10,30 @@ abstract class AbstractFormRequest extends FormRequest
      * バリデーション前に自動的にトリムを適用
      */
     protected function prepareForValidation(): void
-    {
-        $input = $this->all();
+{
+    $input = $this->all();
 
-        foreach ($input as $key => $value) {
-            if (is_string($value)) {
-                $input[$key] = $this->trimWithFullSpace($value);
-            } elseif (is_array($value)) {
-                $input[$key] = $this->trimArray($value);
-            }
+    foreach ($input as $key => $value) {
+        if (is_string($value)) {
+            $input[$key] = $this->trimWithFullSpace($value);
+        } elseif (is_array($value)) {
+            $input[$key] = $this->trimArray($value);
         }
-
-        $this->merge($input);
     }
+
+    $this->merge($input);
+}
+
 
     /**
-     * 文字列をトリム（全角スペースも含む）
+     * 文字列をトリム
      */
     private function trimWithFullSpace(string $value): string
-    {
-        return trim($value, " \t\n\r\0\x0B　");
-    }
+{
+    // ASCII空白(\s) + 全角空白(　) を両端から削除
+    return preg_replace('/\A[\s　]+|[\s　]+\z/u', '', $value) ?? $value;
+}
+
 
     /**
      * 配列を再帰的にトリム
