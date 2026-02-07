@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AppServiceExternalApiException;
 use App\Http\Requests\BookSearchRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
@@ -23,8 +24,9 @@ class BookController extends Controller
      */
 public function store(StoreBookRequest $request): RedirectResponse
 {
+    $data = $request->validatedData();
     $result = $this->bookService->store(
-        $request->validated('isbn'),
+        $data['isbn'],
         (string) Auth::id()
     );
 
@@ -42,9 +44,25 @@ public function store(StoreBookRequest $request): RedirectResponse
      */
     public function search(BookSearchRequest $request): Response
     {
-        $props = $this->bookService->search($request->validated('q', ''));
+        try {
+            $data = $request->validatedData();
+            $query = $data['q'] ?? '';
+            $props = $this->bookService->search($query);
 
-        return Inertia::render('Books/Search', $props);
+            return Inertia::render('Books/Search', $props);
+        } catch (AppServiceExternalApiException $e) {
+            // 外部API例外（429エラーなど）は、検索画面にエラーメッセージを表示
+            $data = $request->validatedData();
+            $query = $data['q'] ?? '';
+            $props = [
+                'books' => [],
+                'filters' => ['q' => $query],
+                'hasSearched' => true,
+                'error' => $e->getUserMessage(),
+            ];
+
+            return Inertia::render('Books/Search', $props);
+        }
     }
 
     public function show(Book $book): Response
