@@ -29,70 +29,91 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="ログイン" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+        <div class="mb-6 text-center">
+            <h1 class="text-xl font-semibold text-stone-800 sm:text-2xl">
+                ログイン
+            </h1>
+            <p class="mt-1 text-sm text-stone-500">
+                アカウントにサインインしてください
+            </p>
+        </div>
+
+        <div
+            v-if="status"
+            class="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700"
+        >
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="メールアドレス" class="text-stone-700" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full rounded-lg border-stone-300 shadow-sm transition focus:border-amber-500 focus:ring-amber-500"
                     v-model="form.email"
                     required
                     autofocus
                     autocomplete="username"
+                    placeholder="you@example.com"
                 />
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                <InputError class="mt-1.5" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div>
+                <InputLabel for="password" value="パスワード" class="text-stone-700" />
 
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full rounded-lg border-stone-300 shadow-sm transition focus:border-amber-500 focus:ring-amber-500"
                     v-model="form.password"
                     required
                     autocomplete="current-password"
+                    placeholder="••••••••"
                 />
 
-                <InputError class="mt-2" :message="form.errors.password" />
+                <InputError class="mt-1.5" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4 block">
-                <label class="flex items-center">
+            <div class="flex items-center">
+                <label class="flex cursor-pointer items-center gap-2">
                     <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
-                        >Remember me</span
-                    >
+                    <span class="text-sm text-stone-600">ログイン状態を保持する</span>
                 </label>
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
+            <div class="flex flex-col gap-4 pt-2 sm:flex-row sm:items-center sm:justify-between">
                 <Link
                     v-if="canResetPassword"
                     :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    class="text-sm text-amber-700 underline decoration-amber-700/50 transition hover:decoration-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-white"
                 >
-                    Forgot your password?
+                    パスワードをお忘れですか？
                 </Link>
-
                 <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full sm:ms-auto sm:w-auto sm:min-w-[120px]"
+                    :class="{ 'opacity-75': form.processing }"
                     :disabled="form.processing"
                 >
-                    Log in
+                    {{ form.processing ? '送信中…' : 'ログイン' }}
                 </PrimaryButton>
             </div>
         </form>
+
+        <p class="mt-6 border-t border-stone-200 pt-6 text-center text-sm text-stone-500">
+            アカウントをお持ちでない方は
+            <Link
+                :href="route('register')"
+                class="font-medium text-amber-700 underline decoration-amber-700/50 hover:decoration-amber-700"
+            >
+                新規登録
+            </Link>
+        </p>
     </GuestLayout>
 </template>

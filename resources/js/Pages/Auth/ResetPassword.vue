@@ -29,67 +29,80 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Reset Password" />
+        <Head title="新しいパスワードを設定" />
 
-        <form @submit.prevent="submit">
+        <div class="mb-6 text-center">
+            <h1 class="text-xl font-semibold text-stone-800 sm:text-2xl">
+                新しいパスワードを設定
+            </h1>
+            <p class="mt-1 text-sm text-stone-500">
+                メールでお送りしたリンクからアクセスしました。新しいパスワードを入力してください。
+            </p>
+        </div>
+
+        <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="メールアドレス" class="text-stone-700" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full rounded-lg border-stone-300 shadow-sm transition focus:border-amber-500 focus:ring-amber-500"
                     v-model="form.email"
                     required
                     autofocus
                     autocomplete="username"
                 />
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                <InputError class="mt-1.5" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div>
+                <InputLabel for="password" value="新しいパスワード" class="text-stone-700" />
 
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full rounded-lg border-stone-300 shadow-sm transition focus:border-amber-500 focus:ring-amber-500"
                     v-model="form.password"
                     required
                     autocomplete="new-password"
+                    placeholder="8文字以上"
                 />
 
-                <InputError class="mt-2" :message="form.errors.password" />
+                <InputError class="mt-1.5" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4">
+            <div>
                 <InputLabel
                     for="password_confirmation"
-                    value="Confirm Password"
+                    value="パスワード（確認）"
+                    class="text-stone-700"
                 />
 
                 <TextInput
                     id="password_confirmation"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full rounded-lg border-stone-300 shadow-sm transition focus:border-amber-500 focus:ring-amber-500"
                     v-model="form.password_confirmation"
                     required
                     autocomplete="new-password"
+                    placeholder="もう一度入力"
                 />
 
                 <InputError
-                    class="mt-2"
+                    class="mt-1.5"
                     :message="form.errors.password_confirmation"
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
+            <div class="pt-2">
                 <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full sm:w-auto sm:min-w-[140px]"
+                    :class="{ 'opacity-75': form.processing }"
                     :disabled="form.processing"
                 >
-                    Reset Password
+                    {{ form.processing ? '設定中…' : 'パスワードを変更' }}
                 </PrimaryButton>
             </div>
         </form>
