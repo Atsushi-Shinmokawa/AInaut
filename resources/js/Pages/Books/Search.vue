@@ -19,6 +19,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    error: {
+        type: String,
+        default: null,
+    },
 });
 
 // 検索用フォーム（GETリクエスト）
@@ -139,6 +143,15 @@ const storeBook = (book) => {
                         </div>
                     </div>
 
+                    <!-- エラーメッセージ -->
+                    <div
+                        v-if="props.error"
+                        class="bg-red-100 text-red-800 px-4 py-3 rounded-md mb-4"
+                    >
+                        {{ props.error }}
+                    </div>
+
+                    <!-- 検索結果なし -->
                     <div
                         v-else-if="props.hasSearched && !searchForm.processing"
                         class="text-center text-gray-500 mt-10"
