@@ -124,8 +124,7 @@ function submitAozora() {
             </PrimaryButton>
 
             <p class="text-xs text-gray-600">
-                ※ v1は「aozora.gr.jp
-                のURLのみ許可」。作品ページからtxtリンクが見つからない場合は、txtファイルURLを直接貼ってください。
+                ※ aozora.gr.jp のURLのみ許可。作品ページのURL、または XHTML（.html）のURL を貼ってください。作品ページの場合は、ページ内の XHTML リンクから本文を取得します。
             </p>
         </div>
 
