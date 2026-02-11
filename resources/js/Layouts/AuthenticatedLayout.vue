@@ -25,55 +25,52 @@ const showingNavigationDropdown = ref(false);
 
 <template>
     <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav class="border-b border-gray-100 bg-white">
+        <div class="min-h-screen bg-stone-50">
+            <nav class="border-b border-stone-200 bg-white shadow-sm">
                 <!-- Primary Navigation Menu -->
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="flex h-16 justify-between">
                         <div class="flex">
-                            <!-- Logo -->
+                            <!-- Logo（クリックでホーム＝ダッシュボード） -->
                             <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
+                                <Link
+                                    :href="route('dashboard')"
+                                    class="flex items-center gap-2 rounded-md transition hover:opacity-90"
+                                >
                                     <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
+                                        class="block h-9 w-auto fill-current text-stone-800"
                                     />
+                                    <span class="hidden text-sm font-semibold text-stone-700 sm:inline">AInaut</span>
                                 </Link>
                             </div>
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
+                            <!-- メインナビ：ホームを先頭に、読書・追加の流れでグループ化 -->
+                            <div class="hidden items-center gap-2 sm:ml-10 sm:flex">
                                 <NavLink
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
-                                    Dashboard
+                                    ホーム
                                 </NavLink>
-
-                                <!-- 📌 追加ここから -->
-                                <NavLink
-                                    :href="route('books.search')"
-                                    :active="route().current('books.search')"
-                                >
-                                    書籍検索
-                                </NavLink>
-
+                                <span class="h-4 w-px bg-stone-200" aria-hidden="true" />
                                 <NavLink
                                     :href="route('reading-logs.index')"
-                                    :active="
-                                        route().current('reading-logs.index')
-                                    "
+                                    :active="route().current('reading-logs.index')"
                                 >
                                     マイ本棚
                                 </NavLink>
                                 <NavLink
-                                    :href="route('imports.kindle.create')"
-                                    class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
+                                    :href="route('books.search')"
+                                    :active="route().current('books.search')"
                                 >
-                                    Kindleハイライト取り込み
+                                    本を探す
                                 </NavLink>
-
-                                <!-- 📌 追加ここまで -->
+                                <span class="h-4 w-px bg-stone-200" aria-hidden="true" />
+                                <Link
+                                    :href="route('imports.kindle.create')"
+                                    class="rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700"
+                                >
+                                    Kindle取り込み
+                                </Link>
                             </div>
                         </div>
 
@@ -85,7 +82,7 @@ const showingNavigationDropdown = ref(false);
                                         <span class="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                                class="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                             >
                                                 {{ $page.props.auth.user.name }}
 
@@ -109,14 +106,14 @@ const showingNavigationDropdown = ref(false);
                                         <DropdownLink
                                             :href="route('profile.edit')"
                                         >
-                                            Profile
+                                            プロフィール
                                         </DropdownLink>
                                         <DropdownLink
                                             :href="route('logout')"
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            ログアウト
                                         </DropdownLink>
                                     </template>
                                 </Dropdown>
@@ -179,29 +176,25 @@ const showingNavigationDropdown = ref(false);
                             :href="route('dashboard')"
                             :active="route().current('dashboard')"
                         >
-                            Dashboard
+                            ホーム
                         </ResponsiveNavLink>
-
-                        <!-- ✅ 追加：スマホメニューにも導線 -->
-                        <ResponsiveNavLink
-                            :href="route('books.search')"
-                            :active="route().current('books.search')"
-                        >
-                            書籍検索
-                        </ResponsiveNavLink>
-
                         <ResponsiveNavLink
                             :href="route('reading-logs.index')"
                             :active="route().current('reading-logs.index')"
                         >
                             マイ本棚
                         </ResponsiveNavLink>
-
+                        <ResponsiveNavLink
+                            :href="route('books.search')"
+                            :active="route().current('books.search')"
+                        >
+                            本を探す
+                        </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('imports.kindle.create')"
                             :active="route().current('imports.kindle.create')"
                         >
-                            Kindleハイライト取り込み
+                            Kindle取り込み
                         </ResponsiveNavLink>
                     </div>
 
@@ -218,14 +211,14 @@ const showingNavigationDropdown = ref(false);
 
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
+                                プロフィール
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 :href="route('logout')"
                                 method="post"
                                 as="button"
                             >
-                                Log Out
+                                ログアウト
                             </ResponsiveNavLink>
                         </div>
                     </div>
@@ -247,7 +240,7 @@ const showingNavigationDropdown = ref(false);
             </div>
 
             <!-- Page Heading -->
-            <header class="bg-white shadow" v-if="$slots.header">
+            <header class="border-b border-stone-200 bg-white shadow-sm" v-if="$slots.header">
                 <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     <slot name="header" />
                 </div>
