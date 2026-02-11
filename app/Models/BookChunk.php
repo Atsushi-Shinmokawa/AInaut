@@ -11,7 +11,12 @@ class BookChunk extends Model
     use HasUuids;
 
     protected $fillable = [
-        'book_id','book_document_id','chunk_index','content','char_length',
+        'user_id',
+        'book_id',
+        'book_document_id',
+        'chunk_index',
+        'content',
+        'char_length',
     ];
 
     public function document(): BelongsTo
