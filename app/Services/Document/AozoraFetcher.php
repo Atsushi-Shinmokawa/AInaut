@@ -10,8 +10,9 @@ class AozoraFetcher
 {
     /**
      * 青空文庫URLから本文テキストを取得する。
-     * - URLが .txt ならそのまま取る
-     * - それ以外（作品ページ等）なら、HTMLから .txt リンクを探して取る（最小実装）
+     * - URLが .html ならそのページを取得し、HTMLから本文を抽出
+     * - URLが .txt ならそのまま取得
+     * - それ以外（図書カード等）なら、HTMLから .html または .txt のリンクを探す（.html 優先）
      */
     public function fetchText(string $url): array
     {
@@ -19,23 +20,36 @@ class AozoraFetcher
 
         $this->assertAllowedHost($url);
 
+        // 1) .html の直URL → HTML取得 → 本文抽出
+        if (preg_match('/\.html(\?.*)?$/i', $url)) {
+            $html = $this->get($url);
+            $text = $this->extractTextFromHtml($html);
+            return ['text' => $text, 'resolved_url' => $url];
+        }
+
+        // 2) .txt の直URL（従来どおり）
         if (preg_match('/\.txt(\?.*)?$/i', $url)) {
             $txt = $this->get($url);
             return ['text' => $txt, 'resolved_url' => $url];
         }
 
-        // 作品ページなどのHTMLを取る
+        // 3) 図書カード等 → .html を優先、なければ .txt
         $html = $this->get($url);
-
-        $txtUrl = $this->extractTxtUrl($html, $url);
-        if (!$txtUrl) {
+        $targetUrl = $this->extractHtmlUrl($html, $url) ?? $this->extractTxtUrl($html, $url);
+        if (!$targetUrl) {
             throw new AppServiceValidationException(
-                '青空文庫ページから txt のリンクが見つかりませんでした。txtファイルURLを直接貼ってください。'
+                '青空文庫ページから XHTML(.html) または テキスト(.txt) のリンクが見つかりませんでした。'
             );
         }
 
-        $txt = $this->get($txtUrl);
-        return ['text' => $txt, 'resolved_url' => $txtUrl];
+        if (preg_match('/\.html(\?.*)?$/i', $targetUrl)) {
+            $htmlContent = $this->get($targetUrl);
+            $text = $this->extractTextFromHtml($htmlContent);
+            return ['text' => $text, 'resolved_url' => $targetUrl];
+        }
+
+        $txt = $this->get($targetUrl);
+        return ['text' => $txt, 'resolved_url' => $targetUrl];
     }
 
     private function get(string $url): string
@@ -57,7 +71,7 @@ class AozoraFetcher
             );
         }
 
-        // 青空のtxtはShift_JISのことがあるので、HTTPヘッダと内容からざっくり変換
+        // 青空のtxt/htmlはShift_JISのことがあるので、UTF-8に変換
         $body = $res->body();
         $body = $this->convertToUtf8($body);
 
@@ -66,8 +80,6 @@ class AozoraFetcher
 
     private function convertToUtf8(string $body): string
     {
-        // 判定が難しいので「まずUTF-8として成立するか」をチェックし、
-        // ダメならSJIS-winとして変換する最小実装
         if (mb_check_encoding($body, 'UTF-8')) {
             return $body;
         }
@@ -88,11 +100,28 @@ class AozoraFetcher
         }
     }
 
+    private function extractHtmlUrl(string $html, string $baseUrl): ?string
+    {
+        $dom = new \DOMDocument();
+        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+
+        $links = $dom->getElementsByTagName('a');
+        foreach ($links as $a) {
+            /** @var \DOMElement $a */
+            $href = $a->getAttribute('href');
+            if (!$href) continue;
+            if (!preg_match('/\.html(\?.*)?$/i', $href)) continue;
+
+            return $this->resolveUrl($baseUrl, $href);
+        }
+
+        return null;
+    }
+
     private function extractTxtUrl(string $html, string $baseUrl): ?string
     {
-        // DOMでa[href]から .txt を探す（最初の1件を採用）
         $dom = new \DOMDocument();
-        @$dom->loadHTML($html);
+        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
 
         $links = $dom->getElementsByTagName('a');
         foreach ($links as $a) {
@@ -101,28 +130,107 @@ class AozoraFetcher
             if (!$href) continue;
             if (!preg_match('/\.txt(\?.*)?$/i', $href)) continue;
 
-            // 相対URLを絶対化
             return $this->resolveUrl($baseUrl, $href);
         }
 
         return null;
     }
 
+    /**
+     * 青空文庫XHTMLから本文をプレーンテキストに抽出する。
+     * body 内を走査し、ルビは rb のみ採用、ブロック要素で改行を入れる。
+     */
+    private function extractTextFromHtml(string $html): string
+    {
+        $dom = new \DOMDocument();
+        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+
+        $body = $dom->getElementsByTagName('body')->item(0);
+        if (!$body) {
+            return '';
+        }
+
+        $parts = [];
+        $this->collectTextNodes($body, $parts);
+        $text = implode('', $parts);
+
+        // 改行・空白の正規化
+        $text = preg_replace("/[ \t]+/u", ' ', $text);
+        $text = preg_replace("/\n[ \t]+/u", "\n", $text);
+        $text = preg_replace("/[ \t]+\n/u", "\n", $text);
+        $text = preg_replace("/\n{3,}/u", "\n\n", $text);
+
+        return trim($text);
+    }
+
+    /**
+     * @param array<string> $parts
+     */
+    private function collectTextNodes(\DOMNode $node, array &$parts): void
+    {
+        if ($node->nodeType === XML_TEXT_NODE) {
+            $parts[] = $node->textContent;
+            return;
+        }
+
+        if ($node->nodeType !== XML_ELEMENT_NODE) {
+            return;
+        }
+
+        $tag = strtolower($node->nodeName ?? '');
+        $blockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'tr', 'li', 'blockquote'];
+
+        if ($tag === 'ruby') {
+            foreach ($node->childNodes as $child) {
+                if ($child->nodeType === XML_ELEMENT_NODE && strtolower($child->nodeName ?? '') === 'rb') {
+                    $parts[] = $child->textContent;
+                    break;
+                }
+            }
+            return;
+        }
+
+        if ($tag === 'script' || $tag === 'style') {
+            return;
+        }
+
+        if ($tag === 'br') {
+            $parts[] = "\n";
+            return;
+        }
+
+        $isBlock = in_array($tag, $blockTags, true);
+
+        if ($isBlock) {
+            $parts[] = "\n";
+        }
+
+        foreach ($node->childNodes as $child) {
+            $this->collectTextNodes($child, $parts);
+        }
+
+        if ($isBlock) {
+            $parts[] = "\n";
+        }
+    }
+
     private function resolveUrl(string $baseUrl, string $href): string
     {
-        if (preg_match('#^https?://#i', $href)) return $href;
+        if (preg_match('#^https?://#i', $href)) {
+            return $href;
+        }
 
         $base = parse_url($baseUrl);
         $scheme = $base['scheme'] ?? 'https';
         $host = $base['host'] ?? '';
         $path = $base['path'] ?? '/';
 
-        // baseのディレクトリ
         $dir = preg_replace('#/[^/]*$#', '/', $path);
 
         if (str_starts_with($href, '/')) {
             return "{$scheme}://{$host}{$href}";
         }
+
         return "{$scheme}://{$host}{$dir}{$href}";
     }
 }
