@@ -215,9 +215,7 @@ class BookService
         if ($threadId) {
             $chatThread = $allThreads->firstWhere('id', $threadId);
         }
-        if (!$chatThread && $allThreads->isNotEmpty()) {
-            $chatThread = $allThreads->first();
-        }
+        // thread が URL に無いときは「新規チャット」状態のため、既存スレッドにフォールバックしない
 
         $chatMessages = [];
         if ($chatThread) {
