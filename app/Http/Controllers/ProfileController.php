@@ -30,13 +30,39 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+    // dd('hit update', $request->method(), $request->all(), $request->allFiles());
+
+    logger()->info('profile update', [
+  'content_type' => request()->header('content-type'),
+  'keys' => array_keys(request()->all()),
+  'has_file' => request()->hasFile('photo'),
+  'files' => array_keys(request()->allFiles()),
+]);
+
+        $user = $request->user();
+
+        $user->fill($request->validated());
+
+        // プロフィール画像のアップロードがあれば処理
+        if ($request->hasFile('profile_photo')) {
+            $file = $request->file('profile_photo');
+
+            // 既存ファイルを削除
+            if ($user->profile_photo_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            // 新しいファイルを保存
+            $path = $file->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
         }
 
-        $request->user()->save();
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit');
     }
