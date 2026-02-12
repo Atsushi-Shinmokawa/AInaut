@@ -17,6 +17,14 @@ const props = withDefaults(
 
 const page = usePage();
 const flash = computed(() => (page.props as any).flash ?? {});
+const authUser = computed(() => (page.props as any).auth?.user ?? null);
+const currentUserProfilePhotoUrl = computed<string | null>(
+    () => authUser.value?.profile_photo_url ?? null
+);
+const currentUserInitial = computed<string>(() => {
+    const name = (authUser.value?.name as string | undefined) ?? "";
+    return name.trim().charAt(0) || "?";
+});
 
 const bottomRef = ref<HTMLElement | null>(null);
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
@@ -160,19 +168,62 @@ const isWaitingForAi = computed(() => form.processing || isPolling.value);
 
         <!-- Messages -->
         <div class="space-y-3">
-            <div
-                v-for="m in chatMessages"
-                :key="m.id"
-                class="rounded-2xl border p-3"
-                :class="m.role === 'assistant' ? 'bg-gray-50' : ''"
-            >
-                <div class="text-xs text-gray-500 mb-2">
-                    {{ m.role === "assistant" ? "AI" : "You" }}
-                </div>
-                <pre class="whitespace-pre-wrap text-sm leading-relaxed">
-    {{ m.content }}
-                    </pre
+            <div v-for="m in chatMessages" :key="m.id">
+                <!-- AI メッセージ -->
+                <div
+                    v-if="m.role === 'assistant'"
+                    class="flex gap-3 justify-start"
                 >
+                    <!-- （将来のキャラアイコン用の枠。いまは丸背景のみ） -->
+                    <div class="flex-shrink-0">
+                        <div
+                            class="h-12 w-12 rounded-full bg-stone-200 flex items-center justify-center text-sm text-stone-600"
+                        >
+                            AI
+                        </div>
+                    </div>
+                    <div
+                        class="max-w-[80%] rounded-2xl border border-stone-200 bg-gray-50 p-3"
+                    >
+                        <div class="mb-1 text-xs text-gray-500">AI</div>
+                        <pre
+                            class="whitespace-pre-wrap text-sm leading-relaxed"
+                        >
+{{ m.content }}
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- ユーザーメッセージ -->
+                <div
+                    v-else
+                    class="flex gap-3 justify-end"
+                >
+                    <div
+                        class="max-w-[80%] rounded-2xl border border-amber-200 bg-amber-50 p-3"
+                    >
+                        <div class="mb-1 text-xs text-gray-500">You</div>
+                        <pre
+                            class="whitespace-pre-wrap text-sm leading-relaxed"
+                        >
+{{ m.content }}
+                        </pre>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <img
+                            v-if="currentUserProfilePhotoUrl"
+                            :src="currentUserProfilePhotoUrl"
+                            alt="Your avatar"
+                            class="h-12 w-12 rounded-full object-cover"
+                        />
+                        <div
+                            v-else
+                            class="h-12 w-12 rounded-full bg-stone-300 flex items-center justify-center text-sm text-stone-700"
+                        >
+                            {{ currentUserInitial }}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- AI thinking（送信直後 or ポーリング中） -->
