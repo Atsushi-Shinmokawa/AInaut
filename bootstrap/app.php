@@ -19,5 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // AppServiceExceptionのハンドリング
+        // 例外がResponsableインターフェースを実装している場合、
+        // Laravelが自動的にtoResponse()メソッドを呼び出す
+        $exceptions->renderable(function (\App\Exceptions\AppServiceException $e, $request) {
+            return $e->toResponse($request);
+        });
     })->create();

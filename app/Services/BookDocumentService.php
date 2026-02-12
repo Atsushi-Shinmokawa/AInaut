@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AppServiceValidationException;
 use App\Models\Book;
 use App\Models\BookChunk;
 use App\Models\BookDocument;
@@ -11,7 +12,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 
 class BookDocumentService
 {
@@ -28,7 +28,10 @@ class BookDocumentService
         // ファイル読み込み
         $raw = file_get_contents($file->getRealPath());
         if ($raw === false) {
-            throw ValidationException::withMessages(['txt' => 'ファイルの読み取りに失敗しました。']);
+            throw new AppServiceValidationException(
+                'ファイルの読み取りに失敗しました。',
+                ['txt' => ['ファイルの読み取りに失敗しました。']]
+            );
         }
 
         // 文字コード変換
@@ -41,16 +44,26 @@ class BookDocumentService
         $this->persistDocumentAndChunks($book, $text, $path, 'upload_txt', null, $originalFilename);
     }
 
+    /** 青空文庫取り込み時の本文の最大文字数（100万字） */
+    private const AOZORA_FETCH_MAX_CHARS = 1_000_000;
+
     /**
      * 青空文庫からテキストを取得して保存
      */
     public function fetchAozora(Book $book, string $url): void
     {
-        // 外部API呼び出し（ビジネスロジック）
         $result = $this->aozoraFetcher->fetchText($url);
+        $text = $result['text'];
 
-        $path = $this->storeText($book, $result['text'], 'aozora_fetch', $result['resolved_url'], null);
-        $this->persistDocumentAndChunks($book, $result['text'], $path, 'aozora_fetch', $result['resolved_url'], null);
+        if (mb_strlen($text) > self::AOZORA_FETCH_MAX_CHARS) {
+            throw new AppServiceValidationException(
+                '本文が長すぎます（' . number_format(self::AOZORA_FETCH_MAX_CHARS) . '字まで）。'
+                . ' 現在: ' . number_format(mb_strlen($text)) . '字です。'
+            );
+        }
+
+        $path = $this->storeText($book, $text, 'aozora_fetch', $result['resolved_url'], null);
+        $this->persistDocumentAndChunks($book, $text, $path, 'aozora_fetch', $result['resolved_url'], null);
     }
 
     /**
