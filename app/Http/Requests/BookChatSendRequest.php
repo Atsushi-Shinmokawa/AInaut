@@ -12,7 +12,8 @@ class BookChatSendRequest extends AbstractFormRequest
     public function rules(): array
     {
         return [
-            'content' => ['required', 'string', 'max:4000'],
+            'content'   => ['required', 'string', 'max:4000'],
+            'thread_id' => ['nullable', 'uuid'],
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\BookSearchRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
 use App\Services\BookService;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
@@ -65,10 +66,11 @@ public function store(StoreBookRequest $request): RedirectResponse
         }
     }
 
-    public function show(Book $book): Response
+    public function show(Request $request, Book $book): Response
     {
         $userId = (string) Auth::id();
-        $props = $this->bookService->buildShowProps($book, $userId);
+        $threadId = $request->query('thread');
+        $props = $this->bookService->buildShowProps($book, $userId, $threadId ? (string) $threadId : null);
         return Inertia::render('Books/Show', $props);
     }
 
