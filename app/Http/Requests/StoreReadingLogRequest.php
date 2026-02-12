@@ -16,7 +16,7 @@ class StoreReadingLogRequest extends AbstractFormRequest
     {
         return [
             'book_id' => ['required', 'uuid', 'exists:books,id'],
-            'status'  => ['nullable', 'in:' . implode(',', ReadingLog::statuses())],
+            'status'  => ['nullable', 'string', 'in:' . implode(',', \App\Enums\ReadingLogStatus::values())],
         ];
     }
 }
