@@ -5,6 +5,7 @@ namespace App\Services\Chat;
 use App\Exceptions\AppServiceExternalApiException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class OpenAiChatClient
 {
@@ -23,21 +24,42 @@ class OpenAiChatClient
     public function chat(array $messages, ?string $model = null, ?float $temperature = null): string
     {
         $model ??= config('services.openai.model', 'gpt-4o-mini');
-        $temperature ??= (float) config('services.openai.temperature', 0.4);
+        $temperature ??= (float) config('services.openai.temperature', 0.6);
 
-        $res = $this->client()->post('/chat/completions', [
-            'model' => $model,
-            'messages' => $messages,
-            'temperature' => $temperature,
-        ]);
-
-        if (!$res->successful()) {
+        try {
+            $res = $this->client()->post('/chat/completions', [
+                'model' => $model,
+                'messages' => $messages,
+                'temperature' => $temperature,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('OpenAI API request exception (connection/timeout etc.)', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
             throw new AppServiceExternalApiException(
-                'OpenAI APIとの通信に失敗しました。',
-                $res->status(),
+                'OpenAI APIとの通信に失敗しました。（接続エラー: ' . $e->getMessage() . '）',
+                null,
                 'OpenAI',
                 '/chat/completions',
-                $res->body()
+                $e->getMessage()
+            );
+        }
+
+        if (!$res->successful()) {
+            $status = $res->status();
+            $body = $res->body();
+            Log::warning('OpenAI API error', [
+                'status' => $status,
+                'body' => $body,
+                'endpoint' => '/chat/completions',
+            ]);
+            throw new AppServiceExternalApiException(
+                "OpenAI APIとの通信に失敗しました。（HTTP {$status}）",
+                $status,
+                'OpenAI',
+                '/chat/completions',
+                $body
             );
         }
 
