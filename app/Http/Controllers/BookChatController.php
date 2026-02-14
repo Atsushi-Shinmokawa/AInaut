@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ChatCharacter;
 use App\Enums\BookMessageRole;
 use App\Http\Requests\BookChatSendRequest;
 use App\Jobs\ProcessChatMessageJob;
@@ -10,12 +11,17 @@ use App\Models\BookMessage;
 use App\Models\BookThread;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class BookChatController extends Controller
 {
     public function send(BookChatSendRequest $request, Book $book): RedirectResponse
     {
+        Log::info('BookChatController::send start', ['book_id' => $book->id]);
+
         $userId = (string) Auth::id();
         $content = $request->validated('content');
         $threadId = $request->validated('thread_id');
@@ -48,6 +54,8 @@ class BookChatController extends Controller
         ]);
 
         ProcessChatMessageJob::dispatch($userMessage->id);
+
+        Log::info('BookChatController::send job dispatched', ['user_message_id' => $userMessage->id]);
 
         return redirect()
             ->route('books.show', ['book' => $book->id, 'tab' => 'chat', 'thread' => $thread->id])
@@ -92,5 +100,32 @@ class BookChatController extends Controller
             'messageCount'    => (int) BookMessage::where('book_thread_id', $thread->id)->count(),
             'lastMessageRole' => $lastMessage ? $lastMessage->role->value : null,
         ]);
+    }
+
+    /**
+     * スレッドのキャラを切り替える（認可: 自分のスレッドのみ）
+     */
+    public function updateThreadCharacter(Request $request, Book $book, string $thread): RedirectResponse
+    {
+        $userId = (string) Auth::id();
+
+        $threadModel = BookThread::where('id', $thread)
+            ->where('book_id', $book->id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'character' => ['required', 'string', Rule::in([
+                ChatCharacter::ZUNDAMON->value,
+                ChatCharacter::METAN->value,
+                ChatCharacter::TSUMUGI->value,
+            ])],
+        ]);
+
+        $threadModel->update(['character' => $validated['character']]);
+
+        return redirect()
+            ->route('books.show', ['book' => $book->id, 'tab' => 'chat', 'thread' => $threadModel->id])
+            ->with('success', 'キャラを切り替えました。');
     }
 }
