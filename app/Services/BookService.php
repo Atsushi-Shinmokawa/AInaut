@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTO\BookData;
+use App\Enums\ChatCharacter;
 use App\Enums\ReadingLogStatus;
 use App\Exceptions\AppServiceExternalApiException;
 use App\Models\Author;
@@ -208,6 +209,7 @@ class BookService
         $chatThreads = $allThreads->map(fn (BookThread $t) => [
             'id' => $t->id,
             'title' => $t->title ?? ('会話 ' . $t->created_at->format('n/j H:i')),
+            'character' => $t->character ?? 'zundamon',
             'updated_at' => $t->updated_at->toIso8601String(),
         ])->values()->all();
 
@@ -247,8 +249,10 @@ class BookService
             'chatThreads' => $chatThreads,
             'chatThread' => $chatThread ? [
                 'id' => $chatThread->id,
+                'character' => $chatThread->character ?? 'zundamon',
             ] : null,
             'chatMessages' => $chatMessages,
+            'characterOptions' => ChatCharacter::optionsForFrontend(),
             'latestSummary' => $latestSummary ? AiSummaryResource::make($latestSummary)->resolve() : null,
         ];
     }
