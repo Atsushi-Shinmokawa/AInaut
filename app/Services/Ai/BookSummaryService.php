@@ -19,8 +19,8 @@ class BookSummaryService
      */
     public function generateAndSave(Book $book, string $userId): AiSummary
     {
-        // 本コンテキスト（highlights + chunks）をまとめて作る
-        $context = $this->contextBuilder->build($book, maxChars: 9000);
+        // 本コンテキスト（highlights + chunks）をまとめて作る（要約は10万文字まで渡す）
+        $context = $this->contextBuilder->build($book, maxChars: 100_000);
 
         $system = <<<SYS
 あなたは「厳密で読みやすい要約」を作る編集者です。
@@ -66,7 +66,7 @@ USR;
             'context_type' => 'general',
             'meta' => [
                 'source' => 'highlights+chunks',
-                'max_chars' => 9000,
+                'max_chars' => 100_000,
             ],
         ]);
     }
