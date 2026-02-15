@@ -206,10 +206,17 @@ class BookService
             ->orderByDesc('updated_at')
             ->get();
 
+        $chatModelOptions = array_map(fn (array $row) => [
+            'id' => $row['id'],
+            'label' => $row['label'],
+            'model' => $row['model'],
+        ], config('services.openai.chat_models', []));
+
         $chatThreads = $allThreads->map(fn (BookThread $t) => [
             'id' => $t->id,
             'title' => $t->title ?? ('会話 ' . $t->created_at->format('n/j H:i')),
             'character' => $t->character ?? 'zundamon',
+            'model' => $t->model,
             'updated_at' => $t->updated_at->toIso8601String(),
         ])->values()->all();
 
@@ -250,9 +257,19 @@ class BookService
             'chatThread' => $chatThread ? [
                 'id' => $chatThread->id,
                 'character' => $chatThread->character ?? 'zundamon',
+                'model' => $chatThread->model,
             ] : null,
             'chatMessages' => $chatMessages,
             'characterOptions' => ChatCharacter::optionsForFrontend(),
+            'chatModelOptions' => $chatModelOptions,
+            'ttsConfig' => [
+                'qualityOptions' => config('tts.quality_options', []),
+                'defaultModel' => config('tts.openai.model', 'tts-1'),
+                'defaultSpeed' => (float) config('tts.openai.speed', 1.0),
+                'backendOptions' => config('tts.backend_options', []),
+                'voicevoxLocalBaseUrl' => config('tts.voicevox_local_url', 'http://127.0.0.1:50021'),
+                'characterSpeakerIds' => config('tts.character_speaker_ids', []),
+            ],
             'latestSummary' => $latestSummary ? AiSummaryResource::make($latestSummary)->resolve() : null,
         ];
     }

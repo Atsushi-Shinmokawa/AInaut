@@ -103,9 +103,9 @@ class BookChatController extends Controller
     }
 
     /**
-     * スレッドのキャラを切り替える（認可: 自分のスレッドのみ）
+     * スレッドのキャラ・モデルを更新する（認可: 自分のスレッドのみ）
      */
-    public function updateThreadCharacter(Request $request, Book $book, string $thread): RedirectResponse
+    public function updateThread(Request $request, Book $book, string $thread): RedirectResponse
     {
         $userId = (string) Auth::id();
 
@@ -115,17 +115,31 @@ class BookChatController extends Controller
             ->firstOrFail();
 
         $validated = $request->validate([
-            'character' => ['required', 'string', Rule::in([
+            'character' => ['sometimes', 'string', Rule::in([
                 ChatCharacter::ZUNDAMON->value,
                 ChatCharacter::METAN->value,
                 ChatCharacter::TSUMUGI->value,
             ])],
+            'model' => ['sometimes', 'nullable', 'string', Rule::in(
+                array_merge([null], array_column(config('services.openai.chat_models', []), 'id'))
+            )],
         ]);
 
-        $threadModel->update(['character' => $validated['character']]);
+        $updates = array_filter($validated, fn ($v) => $v !== null);
+        if (!empty($updates)) {
+            $threadModel->update($updates);
+        }
+
+        $messages = [];
+        if (isset($validated['character'])) {
+            $messages[] = 'キャラを切り替えました。';
+        }
+        if (isset($validated['model'])) {
+            $messages[] = 'モデルを変更しました。';
+        }
 
         return redirect()
             ->route('books.show', ['book' => $book->id, 'tab' => 'chat', 'thread' => $threadModel->id])
-            ->with('success', 'キャラを切り替えました。');
+            ->with('success', $messages ? implode(' ', $messages) : '更新しました。');
     }
 }

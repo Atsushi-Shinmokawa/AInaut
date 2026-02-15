@@ -204,7 +204,12 @@ class BookChatService
             ];
         }
 
-        $answer = $this->client->chat($messages);
+        $modelName = null;
+        if ($thread->model) {
+            $row = collect(config('services.openai.chat_models', []))->firstWhere('id', $thread->model);
+            $modelName = $row['model'] ?? null;
+        }
+        $answer = $this->client->chat($messages, $modelName);
 
         DB::transaction(function () use ($thread, $book, $userMessage, $answer) {
             BookMessage::create([
