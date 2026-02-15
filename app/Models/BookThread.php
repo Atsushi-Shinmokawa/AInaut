@@ -10,7 +10,7 @@ class BookThread extends Model
 {
   use HasUuids;
 
-  protected $fillable = ['user_id', 'book_id', 'title', 'character'];
+  protected $fillable = ['user_id', 'book_id', 'title', 'character', 'model'];
 
   public function messages(): HasMany
   {
