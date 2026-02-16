@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\BookHighlightController;
 use App\Http\Controllers\BookDocumentController;
 use App\Http\Controllers\BookChatController;
+use App\Http\Controllers\BookMessageTtsController;
 use App\Http\Controllers\BookSummaryController;
 
 
@@ -48,9 +49,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     ->name('books.show');
 
     Route::post('/books/{book}/chat/send', [BookChatController::class, 'send'])
-  ->name('books.chat.send');
+        ->name('books.chat.send');
+    Route::get('/books/{book}/chat/status', [BookChatController::class, 'status'])
+        ->name('books.chat.status');
+    Route::patch('/books/{book}/threads/{thread}', [BookChatController::class, 'updateThread'])
+        ->name('books.threads.update');
+    Route::post('/books/{book}/chat/tts', BookMessageTtsController::class)
+        ->name('books.chat.tts');
 
-  Route::post('/books/{book}/summary', [BookSummaryController::class, 'generate'])
+    Route::post('/books/{book}/summary', [BookSummaryController::class, 'generate'])
     ->name('books.summary.generate');
 
 
