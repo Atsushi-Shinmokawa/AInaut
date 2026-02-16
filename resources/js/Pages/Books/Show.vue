@@ -13,15 +13,29 @@ const tab = computed(() => {
     return new URLSearchParams(window.location.search).get("tab") ?? "overview";
 });
 
+export type ChatModelOption = { id: string; label: string; model: string };
+
+export type TtsConfig = {
+    qualityOptions: { id: string; label: string; model: string }[];
+    defaultModel: string;
+    defaultSpeed: number;
+    backendOptions?: { id: string; label: string }[];
+    voicevoxLocalBaseUrl?: string;
+    characterSpeakerIds?: Record<string, number>;
+};
+
 const props = defineProps<{
     book: { id: string; title: string };
     highlights: any[];
     orphanHighlights: any[];
     document: any | null;
     chunksPreview: any[];
-    chatThreads: { id: string; title: string; updated_at: string }[];
-    chatThread: { id: string } | null;
+    chatThreads: { id: string; title: string; character?: string; model?: string | null; updated_at: string }[];
+    chatThread: { id: string; character?: string; model?: string | null } | null;
     chatMessages: any[];
+    characterOptions?: { value: string; label: string; shortDescription: string; iconUrl: string }[];
+    chatModelOptions?: ChatModelOption[];
+    ttsConfig?: TtsConfig | null;
     latestSummary: any | null;
 }>();
 </script>
@@ -35,11 +49,24 @@ const props = defineProps<{
                     class="text-stone-500 hover:text-stone-700 transition"
                     title="ホームへ"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                        />
                     </svg>
                 </Link>
-                <h1 class="text-xl font-semibold leading-tight text-stone-800 truncate max-w-[min(50vw,24rem)]" :title="book.title">
+                <h1
+                    class="text-xl font-semibold leading-tight text-stone-800 truncate max-w-[min(50vw,24rem)]"
+                    :title="book.title"
+                >
                     {{ book.title }}
                 </h1>
             </div>
@@ -56,14 +83,19 @@ const props = defineProps<{
                 </Link>
                 <Link
                     :href="
-                        route('books.show', { book: book.id, tab: 'highlights' })
+                        route('books.show', {
+                            book: book.id,
+                            tab: 'highlights',
+                        })
                     "
                     :class="tab === 'highlights' ? 'font-bold' : ''"
                 >
                     Highlights
                 </Link>
                 <Link
-                    :href="route('books.show', { book: book.id, tab: 'document' })"
+                    :href="
+                        route('books.show', { book: book.id, tab: 'document' })
+                    "
                     class="flex items-center gap-2"
                 >
                     本文
@@ -83,7 +115,9 @@ const props = defineProps<{
                         route('books.show', {
                             book: props.book.id,
                             tab: 'chat',
-                            ...(props.chatThread ? { thread: props.chatThread.id } : {}),
+                            ...(props.chatThread
+                                ? { thread: props.chatThread.id }
+                                : {}),
                         })
                     "
                     :class="tab === 'chat' ? 'font-bold' : ''"
@@ -92,7 +126,10 @@ const props = defineProps<{
                 </Link>
                 <Link
                     :href="
-                        route('books.show', { book: props.book.id, tab: 'summary' })
+                        route('books.show', {
+                            book: props.book.id,
+                            tab: 'summary',
+                        })
                     "
                     :class="tab === 'summary' ? 'font-bold' : ''"
                 >
@@ -121,6 +158,9 @@ const props = defineProps<{
                     :chat-threads="props.chatThreads"
                     :chat-thread="props.chatThread"
                     :chat-messages="props.chatMessages"
+                    :character-options="props.characterOptions ?? []"
+                    :chat-model-options="props.chatModelOptions ?? []"
+                    :tts-config="props.ttsConfig ?? null"
                 />
             </div>
             <div v-else-if="tab === 'summary'">
