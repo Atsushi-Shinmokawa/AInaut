@@ -1,0 +1,37 @@
+{
+  "totalItems": 2,
+  "items": [
+    {
+      "id": "fixture_kw_001",
+      "volumeInfo": {
+        "title": "キーワード検索 本1",
+        "subtitle": null,
+        "authors": ["著者1"],
+        "publisher": "出版社1",
+        "publishedDate": "2019-06",
+        "description": null,
+        "industryIdentifiers": [
+          {"type": "ISBN_13", "identifier": "9784111000001"}
+        ],
+        "imageLinks": {
+          "thumbnail": "https://example.com/cover1.jpg"
+        }
+      }
+    },
+    {
+      "id": "fixture_kw_002",
+      "volumeInfo": {
+        "title": "キーワード検索 本2",
+        "subtitle": null,
+        "authors": ["著者2a", "著者2b"],
+        "publisher": null,
+        "publishedDate": "2018",
+        "description": "説明2",
+        "industryIdentifiers": [
+          {"type": "ISBN_10", "identifier": "4122000003"}
+        ],
+        "imageLinks": {}
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "totalItems": 1,
+  "items": [
+    {
+      "id": "fixture_isbn_001",
+      "volumeInfo": {
+        "title": "テスト書籍タイトル",
+        "subtitle": "サブタイトル",
+        "authors": ["著者A", "著者B"],
+        "publisher": "テスト出版社",
+        "publishedDate": "2020-01-15",
+        "description": "テスト用の説明文です。",
+        "industryIdentifiers": [
+          {"type": "ISBN_13", "identifier": "9784101000018"},
+          {"type": "ISBN_10", "identifier": "4101000012"}
+        ],
+        "imageLinks": {
+          "thumbnail": "https://example.com/cover.jpg"
+        }
+      }
+    }
+  ]
+}
