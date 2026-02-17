@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class BookService
@@ -75,7 +76,7 @@ class BookService
     }
 
 /**
-     * 書籍登録（ISBN検索 + 保存 + ReadingLog作成）
+     * 書籍登録（ISBN検索   保存   ReadingLog作成）
      *
      * @param string $isbn 正規化済みのISBN（FormRequestで正規化済み）
      * @param string $userId
@@ -111,22 +112,22 @@ class BookService
     public function search(string $query): array
     {
         $books = [];
+        $query = trim($query);
 
         if ($query === '') {
             return [
-                'books' => $books,
+                'books' => [],
                 'filters' => ['q' => ''],
                 'hasSearched' => false,
             ];
         }
 
-        // ISBNかどうかを判定（10桁または13桁の数字のみ）
-        // 注意: FormRequestでISBNの場合は既に正規化済み、キーワードの場合はそのまま
-        $isIsbn = strlen($query) === 10 || strlen($query) === 13;
+        // ISBN判定を厳密化
+         $isIsbn = $this->isLikelyIsbn($query);
 
         if ($isIsbn) {
-            // ISBN検索（既にFormRequestで正規化済み）
-            $bookData = $this->searchByIsbn($query);
+            $normalized = strtoupper(str_replace(['-', ' '], '', $query));
+             $bookData = $this->searchByIsbn($normalized);
             if ($bookData) {
                 $books = [
                     [
@@ -156,6 +157,38 @@ class BookService
             'hasSearched' => true,
         ];
     }
+
+    /**
+      * ISBNらしさ判定（Service側でも二重防御）
+      */
+    private function isLikelyIsbn(string $query): bool
+    {
+        $normalized = strtoupper(str_replace(['-', ' '], '', $query));
+
+         if (preg_match('/^\d{13}$/', $normalized) === 1) {
+             return true;
+         }
+
+         if (preg_match('/^\d{9}[\dX]$/', $normalized) === 1) {
+             return true;
+         }
+
+         return false;
+     }
+
+     /**
+      * Google Books API共通パラメータ
+      */
+     private function googleBooksParams(array $params = []): array
+     {
+         $base = [
+             'key' => config('services.google_books.key'),
+             'printType' => 'books',
+             'langRestrict' => 'ja',
+         ];
+
+         return array_filter(array_merge($base, $params), fn ($v) => $v !== null && $v !== '');
+     }
 
      /**
      * 書籍詳細画面に必要なデータを取得して返す
@@ -281,32 +314,28 @@ class BookService
      * @return BookData|null 見つからない場合はnull
      */
     private function searchByIsbn(string $isbn): ?BookData
-    {
-        // ISBNが空または10桁・13桁でない場合は検索しない
-        // 注意: FormRequestで既に正規化・検証済みだが、念のためチェック
-        if ($isbn === '' || (strlen($isbn) !== 10 && strlen($isbn) !== 13)) {
-            Log::warning("Invalid ISBN format: {$isbn}");
-            return null;
-        }
+{
+    if ($isbn === '' || (strlen($isbn) !== 10 && strlen($isbn) !== 13)) {
+        Log::warning("Invalid ISBN format: {$isbn}");
+        return null;
+    }
 
+    $cacheKey = 'google_books:isbn:' . $isbn;
+
+    return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($isbn) {
         try {
-            // Level 3: タイムアウト設定とリトライ処理を入れる
-            // 429エラー（レート制限）の場合はリトライしない
             $response = Http::timeout(5)
-                ->retry(3, 100, function ($exception, $request) {
-                    // 429エラー（レート制限）の場合はリトライしない
+                ->retry(3, 100, function ($exception) {
                     if ($exception instanceof RequestException && $exception->response?->status() === 429) {
-                        return false; // リトライしない
+                        return false;
                     }
-                    // その他のエラー（タイムアウト、ネットワークエラーなど）はリトライ
                     return true;
                 })
-                ->get(self::GOOGLE_BOOKS_API_URL, [
+                ->get(self::GOOGLE_BOOKS_API_URL, $this->googleBooksParams([
                     'q' => "isbn:{$isbn}",
-                ]);
+                ]));
 
             if ($response->failed()) {
-                // レート制限エラー（429）の場合は特別な例外を投げる
                 if ($response->status() === 429) {
                     throw new AppServiceExternalApiException(
                         'Google Books APIの利用制限に達しました。しばらく時間をおいてから再度お試しください。',
@@ -323,41 +352,36 @@ class BookService
 
             $data = $response->json();
 
-            // ISBN10で検索して結果がなかった場合、ISBN13に変換して再検索
             if (($data['totalItems'] ?? 0) === 0 && strlen($isbn) === 10) {
                 $isbn13 = $this->convertIsbn10To13($isbn);
                 if ($isbn13) {
                     Log::info("ISBN10 search failed, retrying with ISBN13: {$isbn13}");
+
                     $response = Http::timeout(5)
-                        ->retry(3, 100, function ($exception, $request) {
-                            // 429エラー（レート制限）の場合はリトライしない
+                        ->retry(3, 100, function ($exception) {
                             if ($exception instanceof RequestException && $exception->response?->status() === 429) {
-                                return false; // リトライしない
+                                return false;
                             }
-                            // その他のエラー（タイムアウト、ネットワークエラーなど）はリトライ
                             return true;
                         })
-                        ->get(self::GOOGLE_BOOKS_API_URL, [
+                        ->get(self::GOOGLE_BOOKS_API_URL, $this->googleBooksParams([
                             'q' => "isbn:{$isbn13}",
-                        ]);
+                        ]));
 
-                    if ($response->failed()) {
-                        // レート制限エラー（429）の場合は特別な例外を投げる
-                        if ($response->status() === 429) {
-                            throw new AppServiceExternalApiException(
-                                'Google Books APIの利用制限に達しました。しばらく時間をおいてから再度お試しください。',
-                                $response->status(),
-                                'Google Books API',
-                                self::GOOGLE_BOOKS_API_URL,
-                                $response->body()
-                            );
-                        }
+                    if ($response->failed() && $response->status() === 429) {
+                        throw new AppServiceExternalApiException(
+                            'Google Books APIの利用制限に達しました。しばらく時間をおいてから再度お試しください。',
+                            $response->status(),
+                            'Google Books API',
+                            self::GOOGLE_BOOKS_API_URL,
+                            $response->body()
+                        );
                     }
 
                     if ($response->successful()) {
                         $data = $response->json();
                         if (($data['totalItems'] ?? 0) > 0) {
-                            $isbn = $isbn13; // 検索に成功したISBN13を使用
+                            $isbn = $isbn13;
                         }
                     }
                 }
@@ -368,59 +392,44 @@ class BookService
                 return null;
             }
 
-            // 最初の1件を取得
             $item = $data['items'][0];
-            $volumeInfo = $item['volumeInfo'];
+            $volumeInfo = $item['volumeInfo'] ?? [];
 
-            // ISBNをレスポンスから取得（ISBN13を優先、なければISBN10、それもなければ検索に使ったISBN）
             $foundIsbn = $isbn;
-            if (isset($volumeInfo['industryIdentifiers'])) {
-                foreach ($volumeInfo['industryIdentifiers'] as $identifier) {
-                    if ($identifier['type'] === 'ISBN_13') {
-                        $foundIsbn = $identifier['identifier'];
-                        break;
-                    } elseif ($identifier['type'] === 'ISBN_10' && $foundIsbn === $isbn) {
-                        $foundIsbn = $identifier['identifier'];
-                    }
+            foreach (($volumeInfo['industryIdentifiers'] ?? []) as $identifier) {
+                if (($identifier['type'] ?? null) === 'ISBN_13') {
+                    $foundIsbn = $identifier['identifier'];
+                    break;
+                } elseif (($identifier['type'] ?? null) === 'ISBN_10' && $foundIsbn === $isbn) {
+                    $foundIsbn = $identifier['identifier'];
                 }
             }
 
-            // 文字列のUTF-8エンコーディングを確認・修正
-            $title = $volumeInfo['title'] ?? '不明なタイトル';
-            $title = mb_convert_encoding($title, 'UTF-8', 'UTF-8');
+            $title = mb_convert_encoding($volumeInfo['title'] ?? '不明なタイトル', 'UTF-8', 'UTF-8');
 
-            $authors = array_map(function ($author) {
-                return mb_convert_encoding($author, 'UTF-8', 'UTF-8');
-            }, $volumeInfo['authors'] ?? ['不明な著者']);
+            $authors = array_map(
+                fn ($author) => mb_convert_encoding($author, 'UTF-8', 'UTF-8'),
+                $volumeInfo['authors'] ?? ['不明な著者']
+            );
 
             $description = isset($volumeInfo['description'])
                 ? mb_convert_encoding($volumeInfo['description'], 'UTF-8', 'UTF-8')
                 : null;
 
-            // DTOに変換して返す（データの正規化）
             return new BookData(
                 title: $title,
-                subTitle: isset($volumeInfo['subtitle'])
-                    ? mb_convert_encoding($volumeInfo['subtitle'], 'UTF-8', 'UTF-8')
-                    : null,
+                subTitle: isset($volumeInfo['subtitle']) ? mb_convert_encoding($volumeInfo['subtitle'], 'UTF-8', 'UTF-8') : null,
                 authors: $authors,
                 isbn: $foundIsbn,
-                publisher: isset($volumeInfo['publisher'])
-                    ? mb_convert_encoding($volumeInfo['publisher'], 'UTF-8', 'UTF-8')
-                    : null,
-                publishedAt: isset($volumeInfo['publishedDate'])
-                    ? Carbon::parse($volumeInfo['publishedDate'])
-                    : null,
+                publisher: isset($volumeInfo['publisher']) ? mb_convert_encoding($volumeInfo['publisher'], 'UTF-8', 'UTF-8') : null,
+                publishedAt: isset($volumeInfo['publishedDate']) ? Carbon::parse($volumeInfo['publishedDate']) : null,
                 description: $description,
                 coverUrl: $volumeInfo['imageLinks']['thumbnail'] ?? null,
-                rawResponse: $item // 後でmeta_dataテーブルに入れるために生データも保持
+                rawResponse: $item
             );
-
         } catch (AppServiceExternalApiException $e) {
-            // 外部API例外（429エラーなど）は再スローしてGlobal Exception Handlerで処理
             throw $e;
         } catch (RequestException $e) {
-            // ネットワークエラー等の例外処理
             Log::error("Book Search Exception: " . $e->getMessage(), [
                 'isbn' => $isbn,
                 'exception' => get_class($e),
@@ -433,7 +442,9 @@ class BookService
             ]);
             return null;
         }
-    }
+    });
+}
+
 
     /**
      * キーワード検索（タイトル・著者名など）
@@ -442,29 +453,29 @@ class BookService
      * @return BookData[] 検索結果の配列（最大10件）
      */
     private function searchByKeyword(string $keyword): array
-    {
-        try {
-            // UTF-8エンコーディングを確認・修正
-            $keyword = mb_convert_encoding($keyword, 'UTF-8', 'UTF-8');
+{
+    $keyword = trim(mb_convert_encoding($keyword, 'UTF-8', 'UTF-8'));
+    if ($keyword === '') {
+        return [];
+    }
 
-            // タイムアウト設定とリトライ処理
-            // 429エラー（レート制限）の場合はリトライしない
+    $cacheKey = 'google_books:kw:' . md5(mb_strtolower($keyword));
+
+    return Cache::remember($cacheKey, now()->addMinutes(3), function () use ($keyword) {
+        try {
             $response = Http::timeout(5)
-                ->retry(3, 100, function ($exception, $request) {
-                    // 429エラー（レート制限）の場合はリトライしない
+                ->retry(3, 100, function ($exception) {
                     if ($exception instanceof RequestException && $exception->response?->status() === 429) {
-                        return false; // リトライしない
+                        return false;
                     }
-                    // その他のエラー（タイムアウト、ネットワークエラーなど）はリトライ
                     return true;
                 })
-                ->get(self::GOOGLE_BOOKS_API_URL, [
+                ->get(self::GOOGLE_BOOKS_API_URL, $this->googleBooksParams([
                     'q' => $keyword,
                     'maxResults' => 10,
-                ]);
+                ]));
 
             if ($response->failed()) {
-                // レート制限エラー（429）の場合は特別な例外を投げる
                 if ($response->status() === 429) {
                     throw new AppServiceExternalApiException(
                         'Google Books APIの利用制限に達しました。しばらく時間をおいてから再度お試しください。',
@@ -480,7 +491,6 @@ class BookService
             }
 
             $data = $response->json();
-
             if (($data['totalItems'] ?? 0) === 0) {
                 return [];
             }
@@ -489,26 +499,22 @@ class BookService
             foreach ($data['items'] ?? [] as $item) {
                 $volumeInfo = $item['volumeInfo'] ?? [];
 
-                // ISBNを取得（ISBN13を優先、なければISBN10）
                 $isbn = null;
-                if (isset($volumeInfo['industryIdentifiers'])) {
-                    foreach ($volumeInfo['industryIdentifiers'] as $identifier) {
-                        if ($identifier['type'] === 'ISBN_13') {
-                            $isbn = $identifier['identifier'];
-                            break;
-                        } elseif ($identifier['type'] === 'ISBN_10' && $isbn === null) {
-                            $isbn = $identifier['identifier'];
-                        }
+                foreach (($volumeInfo['industryIdentifiers'] ?? []) as $identifier) {
+                    if (($identifier['type'] ?? null) === 'ISBN_13') {
+                        $isbn = $identifier['identifier'];
+                        break;
+                    } elseif (($identifier['type'] ?? null) === 'ISBN_10' && $isbn === null) {
+                        $isbn = $identifier['identifier'];
                     }
                 }
 
-                // 文字列のUTF-8エンコーディングを確認・修正
-                $title = $volumeInfo['title'] ?? '不明なタイトル';
-                $title = mb_convert_encoding($title, 'UTF-8', 'UTF-8');
+                $title = mb_convert_encoding($volumeInfo['title'] ?? '不明なタイトル', 'UTF-8', 'UTF-8');
 
-                $authors = array_map(function ($author) {
-                    return mb_convert_encoding($author, 'UTF-8', 'UTF-8');
-                }, $volumeInfo['authors'] ?? ['不明な著者']);
+                $authors = array_map(
+                    fn ($author) => mb_convert_encoding($author, 'UTF-8', 'UTF-8'),
+                    $volumeInfo['authors'] ?? ['不明な著者']
+                );
 
                 $description = isset($volumeInfo['description'])
                     ? mb_convert_encoding($volumeInfo['description'], 'UTF-8', 'UTF-8')
@@ -516,17 +522,11 @@ class BookService
 
                 $results[] = new BookData(
                     title: $title,
-                    subTitle: isset($volumeInfo['subtitle'])
-                        ? mb_convert_encoding($volumeInfo['subtitle'], 'UTF-8', 'UTF-8')
-                        : null,
+                    subTitle: isset($volumeInfo['subtitle']) ? mb_convert_encoding($volumeInfo['subtitle'], 'UTF-8', 'UTF-8') : null,
                     authors: $authors,
                     isbn: $isbn,
-                    publisher: isset($volumeInfo['publisher'])
-                        ? mb_convert_encoding($volumeInfo['publisher'], 'UTF-8', 'UTF-8')
-                        : null,
-                    publishedAt: isset($volumeInfo['publishedDate'])
-                        ? Carbon::parse($volumeInfo['publishedDate'])
-                        : null,
+                    publisher: isset($volumeInfo['publisher']) ? mb_convert_encoding($volumeInfo['publisher'], 'UTF-8', 'UTF-8') : null,
+                    publishedAt: isset($volumeInfo['publishedDate']) ? Carbon::parse($volumeInfo['publishedDate']) : null,
                     description: $description,
                     coverUrl: $volumeInfo['imageLinks']['thumbnail'] ?? null,
                     rawResponse: $item
@@ -534,9 +534,7 @@ class BookService
             }
 
             return $results;
-
         } catch (AppServiceExternalApiException $e) {
-            // 外部API例外（429エラーなど）は再スローしてGlobal Exception Handlerで処理
             throw $e;
         } catch (RequestException $e) {
             Log::error("Book Keyword Search Exception: " . $e->getMessage(), [
@@ -551,7 +549,9 @@ class BookService
             ]);
             return [];
         }
-    }
+    });
+}
+
 
     /**
      * ISBN10をISBN13に変換
@@ -560,23 +560,22 @@ class BookService
      * @return string|null ISBN13（13桁）、変換できない場合はnull
      */
     private function convertIsbn10To13(string $isbn10): ?string
-    {
-        if (strlen($isbn10) !== 10) {
-            return null;
-        }
-
-        // ISBN10の最初の9桁を取得（最後の1桁はチェックディジット）
-        $prefix = '978'; // 書籍のISBN13のプレフィックス
-        $isbn13Base = $prefix . substr($isbn10, 0, 9);
-
-        // チェックディジットを計算
-        $sum = 0;
-        for ($i = 0; $i < 12; $i++) {
-            $digit = (int)$isbn13Base[$i];
-            $sum += ($i % 2 === 0) ? $digit : $digit * 3;
-        }
-
-        $checkDigit = (10 - ($sum % 10)) % 10;
-        return $isbn13Base . $checkDigit;
+{
+    if (strlen($isbn10) !== 10) {
+        return null;
     }
+
+    $prefix = '978';
+    $isbn13Base = $prefix . substr($isbn10, 0, 9);
+
+    $sum = 0;
+    for ($i = 0; $i < 12; $i++) {
+        $digit = (int) $isbn13Base[$i];
+        $sum += ($i % 2 === 0) ? $digit : $digit * 3;
+    }
+
+    $checkDigit = (10 - ($sum % 10)) % 10;
+    return $isbn13Base . $checkDigit;
+}
+
 }
